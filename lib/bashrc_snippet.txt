@@ -1,4 +1,4 @@
 antlr_jar_path='e:\git\compilers\lib\antlr-4.5.3-complete.jar'
-#export CLASSPATH=".;$CLASSPATH;$antlr_jar_path"
-alias antlr4='java -Xmx500M -cp "$antlr_jar_path" org.antlr.v4.Tool'
-alias grun='java -cp "$antlr_jar_path" org.antlr.v4.gui.TestRig'
+export CLASSPATH=".;$antlr_jar_path"
+alias antlr4='java -Xmx500M org.antlr.v4.Tool'
+alias grun='java org.antlr.v4.gui.TestRig'
