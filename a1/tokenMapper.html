@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Token Mapper</title>
+	<style type="text/css">
+	p {
+		font-family: monospace, sans-serif;
+	}
+	h2 {
+		font-family: Georgia, serif;
+		color: darkslategray;
+	}
+	.hidden {
+		display: none;
+	}
+	</style>
+</head>
+<body>
+	<h2>Map TestRig output to token names!</h2>
+	<div id="map">	
+		<p>1. Copy-and-paste lines from .tokens file here</p>
+		<textarea rows="5" cols="50" placeholder="Paste content here ..." id="mapInput"></textarea>
+		<br/>
+		<button type="submit" id="submitMap">Submit</button>
+	</div>
+
+	<div id="grun" class="hidden">
+		<p>2. Now copy-and-paste grun output</p>
+		<textarea rows="5" cols="50" placeholder="Paste content here ..." id="grunInput"></textarea>
+		<br/>
+		<button type="submit" id="submitGrun">Submit</button>
+	</div>
+
+	<div id="output" class="hidden">
+		<h2>Result</h2>
+		<p id="results"></p>
+	</div>
+</body>
+<script type="text/javascript">
+	(function () {
+		document.getElementById('submitMap').onclick = function () {
+			var mapData = document.getElementById('mapInput').value.split("\n");
+
+			document.getElementById('map').classList.add('hidden');
+			document.getElementById('grun').classList.remove('hidden');
+
+			document.getElementById('submitGrun').onclick = function () {
+				var grunData = document.getElementById('grunInput').value.split("\n");
+				var idToNameMap = {
+					"-1" : "!!End-Of-File!!"
+				};
+
+				for (var i = 0; i <= mapData.length; i++) {
+					var nameTokenPair = mapData[i].split("=");
+					var tokenId = nameTokenPair[1];
+					if (tokenId != (i + 1)) {
+						break;
+					}
+					idToNameMap[tokenId] = nameTokenPair[0];
+				}
+
+				var processedGrunData = grunData.map(function (tokenLine) {
+					var markedName = tokenLine.replace(/[^']\<([^>]*)\>/g, (fullMatch, capturedItem) => {
+						if (idToNameMap[capturedItem]) {
+							return ",<b>" + idToNameMap[capturedItem] + "</b>";
+						}
+						return ",<span style=\"background-color:red;\">" + capturedItem + "</span>";
+					});
+					var markedNameAndLexeme = markedName.replace(/\'[^']*\'/, (fullMatch) => {
+						return "<mark>" + fullMatch + "</mark>";
+					});
+					debugger;
+					return markedNameAndLexeme;
+				})
+
+				var results = document.getElementById('results');
+				results.innerHTML = processedGrunData.join("<br/>");
+
+				document.getElementById('output').classList.remove('hidden');
+			}
+		};
+	})();
+</script>
+</html>

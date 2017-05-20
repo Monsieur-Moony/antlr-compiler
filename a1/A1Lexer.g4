@@ -4,6 +4,7 @@ Class
 : 'class'
 ;
 
+// FIXME: Is this a keyword?
 Program
 : 'Program'
 ;
@@ -156,8 +157,8 @@ False
 : 'false'
 ;
 
-fragment Letter
-: [a-zA-Z]
+fragment Alphabet
+: [a-zA-Z_]
 ;
 
 fragment Digit
@@ -165,7 +166,7 @@ fragment Digit
 ;
 
 Id
-: Letter(Letter|Digit)*
+: Alphabet(Alphabet|Digit)*
 ;
 
 fragment DecLiteral
