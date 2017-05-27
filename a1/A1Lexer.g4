@@ -181,12 +181,16 @@ IntLiteral
 : DecLiteral | HexLiteral
 ;
 
-fragment EscapedChar
-: '\\'('\\'|'\''|'n'|'t'|'r'|'v'|'b'|'a'|'f')
+fragment Delim
+: ('\a'|'\b'|'\f'|'\t'|'\n'|'\r'|'\v')
 ;
 
 fragment Char
-: ~('\''|'\\')
+: ~('\''|Delim|'\\')
+;
+
+fragment EscapedChar
+: '\\'('\\'|'\''|'"'|'a'|'b'|'f'|'n'|'r'|'t'|'v')
 ;
 
 CharLiteral
@@ -194,27 +198,14 @@ CharLiteral
 ;
 
 fragment StringChar
-: ~('"'|'\n'|'\\')
+: ~('"'|Delim|'\\')
 ;
 
 StringLiteral
 : '"'(StringChar|EscapedChar)*'"'
 ;
 
-fragment Delim
-: (' '|'\t'|'\n'|'\r'|'\b')
-;
-
 WhiteSpace
-: Delim+ -> skip
+: (' '|Delim)+ -> skip
 ;
-
-
-
-
-
-
-
-
-
 
