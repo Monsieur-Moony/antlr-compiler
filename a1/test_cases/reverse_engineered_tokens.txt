@@ -1,21 +1,24 @@
-'b'				2
-"Hello World"	3
-class			4
+CharLiteral		2
+StringLiteral	3
+Class			4
 Program			5
-if				7
-else			8
-for				9
-break			11
-continue		12
-callout			13
-323				14
-0x42f3			15
+If				7
+Else			8
+For				9
+Return			10
+Break			11
+Continue		12
+Callout			13
+DecimalLiteral	14
+HexLiteral		15
+
 true false		16
 int boolean		17
 c void			18
-< >= ==			19
+< >= == !=		19
 =				20
 * / + -			21
+&&				22
 (				23
 )				24
 {				25

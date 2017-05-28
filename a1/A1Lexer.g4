@@ -4,16 +4,15 @@ Class
 : 'class'
 ;
 
-// FIXME: Is this a keyword?
 Program
 : 'Program'
 ;
 
-OBrace
+OCurlyBrace
 : '{'
 ;
 
-CBrace
+CCurlyBrace
 : '}'
 ;
 
@@ -113,7 +112,7 @@ Div
 : '/'
 ;
 
-Modulo
+Mod
 : '%'
 ;
 
@@ -125,19 +124,19 @@ GreaterThan
 : '>'
 ;
 
-LessThanEqual
+LessThanEquals
 : '<='
 ;
 
-GreaterThanEqual
+GreaterThanEquals
 : '>='
 ;
 
-Equal
+Equals
 : '=='
 ;
 
-NotEqual
+NotEquals
 : '!='
 ;
 
@@ -174,7 +173,7 @@ fragment DecLiteral
 ;
 
 fragment HexLiteral
-: '0'('x'|'X')(Digit|[a-fA-F])+
+: '0x'(Digit|[a-fA-F])+
 ;
 
 IntLiteral
@@ -204,4 +203,3 @@ StringLiteral
 WhiteSpace
 : (' '|'\b'|'\f'|'\t'|'\n'|'\r')+ -> skip
 ;
-
