@@ -9,11 +9,11 @@ Program
 : 'Program'
 ;
 
-LeftBrace
+OBrace
 : '{'
 ;
 
-RightBrace
+CBrace
 : '}'
 ;
 
@@ -77,11 +77,11 @@ Callout
 : 'callout'
 ;
 
-LeftBracket
+OSquareBrace
 : '['
 ;
 
-RightBracket
+CSquareBrace
 : ']'
 ;
 
@@ -93,11 +93,11 @@ Not
 : '!'
 ;
 
-LeftParen
+OParen
 : '('
 ;
 
-RightParen
+CParen
 : ')'
 ;
 
@@ -181,12 +181,12 @@ IntLiteral
 : DecLiteral | HexLiteral
 ;
 
-fragment Delim
+fragment SpecialChar
 : ('\a'|'\b'|'\f'|'\t'|'\n'|'\r'|'\v')
 ;
 
 fragment Char
-: ~('\''|Delim|'\\')
+: ~('\''|SpecialChar|'\\')
 ;
 
 fragment EscapedChar
@@ -198,7 +198,7 @@ CharLiteral
 ;
 
 fragment StringChar
-: ~('"'|Delim|'\\')
+: ~('"'|SpecialChar|'\\')
 ;
 
 StringLiteral
@@ -206,6 +206,6 @@ StringLiteral
 ;
 
 WhiteSpace
-: (' '|Delim)+ -> skip
+: (' '|SpecialChar)+ -> skip
 ;
 
