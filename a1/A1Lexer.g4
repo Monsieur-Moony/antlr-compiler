@@ -1,3 +1,12 @@
+/*************************************************
+ * Course: CMPT 379 Compilers - Summer 2017      *
+ * Instructor: ***REMOVED*** ***REMOVED***                        *
+ *                                               *
+ * Author: Karan Sharma                          *
+ * ID: ***REMOVED***                                 *
+ * Email: ***REMOVED***                           *
+ *************************************************/
+
 lexer grammar A1Lexer;
 
 Class
