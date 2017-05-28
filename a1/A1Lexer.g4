@@ -181,12 +181,8 @@ IntLiteral
 : DecLiteral | HexLiteral
 ;
 
-fragment SpecialChar
-: ('\a'|'\b'|'\f'|'\t'|'\n'|'\r'|'\v')
-;
-
 fragment Char
-: ~('\''|SpecialChar|'\\')
+: ~('\''|'\b'|'\f'|'\t'|'\n'|'\r'|'\\')
 ;
 
 fragment EscapedChar
@@ -198,7 +194,7 @@ CharLiteral
 ;
 
 fragment StringChar
-: ~('"'|SpecialChar|'\\')
+: ~('"'|'\b'|'\f'|'\t'|'\n'|'\r'|'\\')
 ;
 
 StringLiteral
@@ -206,6 +202,6 @@ StringLiteral
 ;
 
 WhiteSpace
-: (' '|SpecialChar)+ -> skip
+: (' '|'\b'|'\f'|'\t'|'\n'|'\r')+ -> skip
 ;
 
