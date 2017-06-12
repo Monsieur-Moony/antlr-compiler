@@ -8,34 +8,24 @@ grammar A2Syntax;
 import java.io.*;
 }
 
-
-
 @parser::members {
-        //AST node count
+    //AST node count
 	int count = 0;
 	String graph = "";
 
 	int GetId() {
 		return count++;
 	}
-
 	
 	public class MySet {
-
-		
-
-
 		int[] ids;
 		int size;
 
 		MySet () {
 			System.out.println("\n\nInitArray\n-------------");
 
-
 			ids = new int [100];		
 			size = 0;
-
-		
 		}
 
 		void ExtendArray(int val) {
@@ -43,8 +33,6 @@ import java.io.*;
 
 			ids[size] = val;
 			size ++;
-
-		
 		}
 
 		void AppendArray(MySet s) {
@@ -52,10 +40,7 @@ import java.io.*;
 				ExtendArray(s.ids[i]);
 			}
 		}
-
-
-
-	}//MySet
+	} //MySet
 
 	String ProcessString(String s) {
 		String x = "\\" + s.substring(0, s.length() - 1) + "\\\"";
@@ -68,22 +53,16 @@ import java.io.*;
 		int id = GetId();
 		graph += (id + " [label=\"" + label + "\"]\n");
 		return id;
-
 	}
 
 	void PrintEdge (int id1, int id2) {
 		System.out.println("\n\nPrintEdge\n-------------\nid1 = " + id1 + "\nid2 = " + id2);
-
 		
 		if ((id1 != -1) && (id2 != -1)) graph += (id1 + " -> " + id2 + "\n");
-		
-		
-
 	}
 
 	void PrintEdges (int id, MySet s) {
 		System.out.println("\n\nPrintEdges\n-------------\nid = " + id + "\nsize = " + s.size);
-
 		
 		for (int i = 0; i < s.size; i ++) {
 			PrintEdge(id, s.ids[i]);
@@ -92,7 +71,6 @@ import java.io.*;
 
 	void PrintGraph () throws IOException {
 		System.out.println("\n\nPrintGraph\n-------------");
-		
 
 		File file = new File("test.dot");
 		file.createNewFile();
@@ -100,15 +78,9 @@ import java.io.*;
 		writer.write("digraph G {\nordering=out\n" + graph + "\n}\n"); 
 		writer.flush();
 		writer.close();
-		
 
 		System.out.println("digraph G {\nordering=out\n" + graph + "\n}\n");
 	}
-
-
-
-
-	
 }
 
 
@@ -132,9 +104,6 @@ prog
 		PrintEdges(id2, $method_decls.s);
 		PrintEdge(id, id2);
 	}
-
-	
-	
 
 	try {PrintGraph();} catch(IOException e) {}
 }
