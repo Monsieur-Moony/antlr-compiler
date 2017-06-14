@@ -7,7 +7,8 @@ field_decls: field_decls field_decl ';'
            | ;
 
 field_decl: field_decl ',' Ident
-          | Type Ident;
+          | Type Ident
+          | Type Ident '[' num ']';
 
 inited_field_decl: Type Ident '=' literal;
 
