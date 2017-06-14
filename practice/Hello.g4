@@ -38,6 +38,11 @@ statements: statement statements
 
 statement: location eqOp expr ';'
          | method_call ';'
+         | If '(' expr ')' block (Else block)?
+         | For Ident '=' expr ',' expr block
+         | Ret (expr)? ';'
+         | Brk ';'
+         | Cnt ';'
          | block;
 
 method_call: Ident '(' method_args ')'
@@ -55,9 +60,14 @@ method_args: expr next_method_args
 next_method_args: next_method_args ',' expr
                 | ;
 
-expr: literal
+// Precedence: parentheses > method call > unary expr > location > literal > */% > +- > relOp > condOp
+expr: location
+    | method_call
+    | literal
     | expr binOp expr
-    | location;
+    | '-' expr
+    | '!' expr
+    | '(' expr ')';
 
 location: Ident
         | Ident '[' expr ']';
