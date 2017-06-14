@@ -7,6 +7,7 @@ field_decls: field_decls field_decl ';'
            | ;
 
 field_decl: field_decl ',' Ident
+          | field_decl ',' Ident '[' num ']'
           | Type Ident
           | Type Ident '[' num ']';
 
@@ -18,10 +19,10 @@ method_decls: method_decls method_decl
 method_decl: Type Ident '(' params ')' block
            | Void Ident '(' params ')' block;
 
-params: Type Ident nextParams
+params: Type Ident next_params
       | ;
 
-nextParams: nextParams ',' Type Ident
+next_params: next_params ',' Type Ident
           | ;
 
 block: '{' var_decls statements '}';
@@ -36,13 +37,30 @@ statements: statement statements
           | ;
 
 statement: location eqOp expr ';'
+         | method_call ';'
          | block;
+
+method_call: Ident '(' method_args ')'
+           | Callout '(' Str callout_args ')';
+
+callout_args: callout_args ',' callout_arg
+            | ;
+
+callout_arg: expr
+           | Str;
+
+method_args: expr next_method_args
+           | ;
+
+next_method_args: next_method_args ',' expr
+                | ;
 
 expr: literal
     | expr binOp expr
     | location;
 
-location: Ident;
+location: Ident
+        | Ident '[' expr ']';
 
 // *******************************************
 
