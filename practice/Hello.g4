@@ -23,7 +23,7 @@ params: Type Ident next_params
       | ;
 
 next_params: next_params ',' Type Ident
-          | ;
+           | ;
 
 block: '{' var_decls statements '}';
 
@@ -60,14 +60,41 @@ method_args: expr next_method_args
 next_method_args: next_method_args ',' expr
                 | ;
 
-// Precedence: parentheses > method call > unary expr > location > literal > */% > +- > relOp > condOp
-expr: location
-    | method_call
-    | literal
-    | expr binOp expr
-    | '-' expr
-    | '!' expr
-    | '(' expr ')';
+// Precedence: ||
+//             &&
+//             == !=
+//             < <= > >=
+//             + -
+//             * / %
+//             - ! <unary>
+//             <method call> <literal> <location> ()
+expr: logical_or_expr;
+
+logical_or_expr: logical_or_expr '||' logical_and_expr
+               | logical_and_expr;
+
+logical_and_expr: logical_and_expr '&&' equality_expr
+                | equality_expr;
+
+equality_expr: equality_expr ('==' | '!=') rel_expr
+             | rel_expr;
+
+rel_expr: rel_expr ('<' | '<=' | '>' | '>=') additive_expr
+        | additive_expr;
+
+additive_expr: additive_expr ('+' | '-') multiplicative_expr
+             | multiplicative_expr;
+
+multiplicative_expr: multiplicative_expr ('*' | '/' | '%') unary_expr
+                   | unary_expr;
+
+unary_expr: ('-' | '!') unary_expr
+          | primary_expr;
+
+primary_expr: method_call
+            | literal
+            | location
+            | '(' expr ')';
 
 location: Ident
         | Ident '[' expr ']';
