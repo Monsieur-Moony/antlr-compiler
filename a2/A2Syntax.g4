@@ -8,7 +8,7 @@
  *************************************************/
  // NOTE: Changes to Sessions 1 and 3 were made with the instructor's permission
  
- grammar A2Syntax;
+grammar A2Syntax;
 
 //---------------------------------------------------------------------------------------------------
 // Session 1: ANTLR tree plotting API, You SHOULD NOT make any modification to this session
@@ -185,7 +185,6 @@ inited_field_decl returns [int id]
 method_decls returns [MySet s]
 : m=method_decls method_decl
 {
-	
 	$s = $m.s;
 	$s.ExtendArray($method_decl.id);
 }
@@ -224,7 +223,6 @@ params returns [int id]
 	
 	PrintEdge($id, PrintNode($Type.text));
 	PrintEdge($id, PrintNode($Ident.text));
-
 	PrintEdges($id, $nextParams.s);
 }
 |
@@ -314,18 +312,109 @@ statements returns [int id]
 
 // <statement> -> <location> <assign_op> <expr> ;
 statement returns [int id]
-: location AssignOp expr ';'
+: location assignOp expr ';'
 {
 	$id = PrintNode("Assign");
 	PrintEdge($id, $location.id);
-	PrintEdge($id, PrintNode($AssignOp.text));
+	PrintEdge($id, PrintNode($assignOp.text));
 	PrintEdge($id, $expr.id);
+}
+//| method_call ';'
+//{
+//
+//}
+| If '(' expr ')' b1=block (Else b2=block)?
+{
+    $id = PrintNode("If");
+    PrintEdge($id, expr.id);
+    PrintEdge($id, b1.id);
+
+    if ($Else != null) {
+        PrintEdge($id, b2.id);
+    }
+}
+| For Ident '=' e1=expr ',' e2=expr block
+{
+    $id = PrintNode("For");
+    PrintEdge($id, PrintNode($Ident.text));
+    PrintEdge($id, e1.id);
+    PrintEdge($id, e2.id);
+    PrintEdge($id, $block.id);
+}
+| Ret expr ';'
+{
+    $id = PrintNode("Ret");
+
+    if ($expr != null) {
+        PrintEdge($id, expr.id);
+    }
+}
+| Brk ';'
+{
+    $id = PrintNode("Break");
+}
+| Cnt ';'
+{
+    $id = PrintNode("Cont");
 }
 | block
 {
 	$id = $block.id;
 };
 
+//method_call returns [int id]
+//: Ident '(' call_args ')'
+//{
+//    $id = PrintNode("User_meth");
+//
+//    PrintEdge($id, PrintNode($Ident.text));
+//    PrintEdges($id, $nextParams.s);
+//
+//}
+//| Callout '(' Str callout_args ')'
+//{
+//    $id = PrintNode("Ext_meth");
+//};
+//
+//callout_args returns [int id]
+//: callout_args ',' callout_arg
+//{
+//
+//}
+//|
+//{
+//
+//};
+//
+//callout_arg returns [MySet s]
+//: expr
+//{
+//
+//}
+//| Str
+//{
+//
+//};
+//
+//call_args returns [int id]
+//: expr next_call_args
+//{
+//
+//}
+//|
+//{
+//
+//};
+//
+//next_call_args returns [MySet s]
+//: next_call_args ',' expr
+//{
+//
+//}
+//|
+//{
+//
+//};
 
 //<expr> -> <expr> <bin_op> <expr>
 //<expr> -> <location>
@@ -336,11 +425,11 @@ expr returns [int id]
 	$id = PrintNode("Const_expr");
 	PrintEdge($id, PrintNode($literal.text));
 }
-| e1=expr AddOp e2=expr
+| e1=expr addOp e2=expr
 {
 	$id = PrintNode("Bin_expr");
 	PrintEdge($id, $e1.id);
-	PrintEdge($id, PrintNode($AddOp.text));
+	PrintEdge($id, PrintNode($addOp.text));
 	PrintEdge($id, $e2.id);
 }
 | location
@@ -368,6 +457,22 @@ literal
 : Num
 | Char
 | BoolLit
+;
+
+assignOp
+: '+='
+| '-='
+| '='
+;
+
+addOp
+: '+'
+| '-'
+;
+
+unaryOp
+: '!'
+| '-'
 ;
 
 Num
@@ -491,22 +596,6 @@ RelOp
 | '>=' 
 | '<'
 | '>'
-;
-
-AssignOp
-: '+='
-| '-='
-| '='
-;
-
-AddOp
-: '+'
-| '-'
-;
-
-UnaryOp
-: '!'
-| '-'
 ;
 
 MultOp
