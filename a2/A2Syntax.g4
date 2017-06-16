@@ -6,6 +6,7 @@
  * ID: ***REMOVED***                                 *
  * Email: ***REMOVED***                           *
  *************************************************/
+ // NOTE: Changes to Sessions 1 and 3 were made with the instructor's permission
  
  grammar A2Syntax;
 
@@ -99,22 +100,25 @@ import java.io.*;
 prog
 : Class Program '{' field_decls method_decls '}'
 {
-	
-	int id = PrintNode("Program");
+	int selfId = PrintNode("Program");
 
 	if ($field_decls.s.size > 0) {
-		int id2 = PrintNode("Field_decls");
-		PrintEdges(id2, $field_decls.s);
-		PrintEdge(id, id2);
+		int fieldDeclId = PrintNode("Field_decls");
+		PrintEdges(fieldDeclId, $field_decls.s);
+		PrintEdge(selfId, fieldDeclId);
 	}
 
 	if ($method_decls.s.size > 0) {
-		int id2 = PrintNode("Method_decls");
-		PrintEdges(id2, $method_decls.s);
-		PrintEdge(id, id2);
+		int methodDeclId = PrintNode("Method_decls");
+		PrintEdges(methodDeclId, $method_decls.s);
+		PrintEdge(selfId, methodDeclId);
 	}
 
-	try {PrintGraph();} catch(IOException e) {}
+	try {
+        PrintGraph();
+    } catch (IOException e) {
+        // do nothing
+    }
 }
 ;
 
@@ -143,6 +147,13 @@ field_decl returns [int id]
 
 	PrintEdge($f.id, PrintNode($Ident.text));
 }
+| f=field_decl ',' Ident '[' Num ']'
+{
+    $id = $f.id;
+
+    PrintEdge($f.id, PrintNode($Ident.text));
+    PrintEdge($f.id, PrintNode($Num.text));
+}
 | Type Ident
 {
 	$id = PrintNode("Field_decl");
@@ -150,10 +161,18 @@ field_decl returns [int id]
 	PrintEdge($id, PrintNode($Type.text));
 	PrintEdge($id, PrintNode($Ident.text));
 }
+| Type Ident '[' Num ']'
+{
+    $id = PrintNode("Field_decl");
+
+	PrintEdge($id, PrintNode($Type.text));
+	PrintEdge($id, PrintNode($Ident.text));
+	PrintEdge($id, PrintNode($Num.text));
+}
 ;
 
 inited_field_decl returns [int id]
-: Type Ident '=' literal 
+: Type Ident '=' literal
 {
 	$id = PrintNode("Inited_field_decl");
 
@@ -162,8 +181,6 @@ inited_field_decl returns [int id]
 	PrintEdge($id, PrintNode($literal.text));
 }
 ;
-
-
 
 method_decls returns [MySet s]
 : m=method_decls method_decl
@@ -175,8 +192,6 @@ method_decls returns [MySet s]
 |
 {
 	$s = new MySet();
-	
-	
 }
 ;
 
@@ -199,7 +214,6 @@ method_decl returns [int id]
 	PrintEdge($id, PrintNode($Ident.text));
 	PrintEdge($id, $params.id);
 	PrintEdge($id, $block.id);
-	
 }
 ;
 
@@ -300,11 +314,11 @@ statements returns [int id]
 
 // <statement> -> <location> <assign_op> <expr> ;
 statement returns [int id]
-: location eqOp expr ';'
+: location AssignOp expr ';'
 {
 	$id = PrintNode("Assign");
 	PrintEdge($id, $location.id);
-	PrintEdge($id, PrintNode($eqOp.text));
+	PrintEdge($id, PrintNode($AssignOp.text));
 	PrintEdge($id, $expr.id);
 }
 | block
@@ -322,11 +336,11 @@ expr returns [int id]
 	$id = PrintNode("Const_expr");
 	PrintEdge($id, PrintNode($literal.text));
 }
-| e1=expr binOp e2=expr
+| e1=expr AddOp e2=expr
 {
 	$id = PrintNode("Bin_expr");
 	PrintEdge($id, $e1.id);
-	PrintEdge($id, PrintNode($binOp.text));
+	PrintEdge($id, PrintNode($AddOp.text));
 	PrintEdge($id, $e2.id);
 }
 | location
@@ -350,42 +364,27 @@ location returns [int id]
 //---------------------------------------------------------------------------------------------------
 // Session 3: Lexical definition, You SHOULD NOT make any modification to this session
 //---------------------------------------------------------------------------------------------------
-num
-: DecNum
-| HexNum
-;
-
 literal
-: num
+: Num
 | Char
 | BoolLit
 ;
 
-eqOp
-: '='
-| AssignOp
+Num
+: DecNum
+| HexNum
 ;
 
-mathOp
-: '-'
-| ArithOp
-;
-
-boolOp
-: '!'
-| CondOp
-;
-
-binOp
-: mathOp
-| RelOp
-| CondOp
+EqOp
+: '=='
+| '!='
 ;
 
 fragment Delim
 : ' '
 | '\t'
 | '\n'
+| '\r'
 ;
 
 fragment Letter
@@ -492,27 +491,27 @@ RelOp
 | '>=' 
 | '<'
 | '>'
-| '=='
-| '!='
 ;
 
 AssignOp
 : '+='
 | '-='
+| '='
 ;
 
-ArithOp
+AddOp
 : '+'
-| '*'
+| '-'
+;
+
+UnaryOp
+: '!'
+| '-'
+;
+
+MultOp
+: '*'
 | '/'
 | '%'
 ;
-
-CondOp
-: '&&'
-| '||'
-;
-
-
-
 
