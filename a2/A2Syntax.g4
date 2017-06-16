@@ -1,4 +1,13 @@
-grammar A2Syntax;
+/*************************************************
+ * Course: CMPT 379 Compilers - Summer 2017      *
+ * Instructor: ***REMOVED*** ***REMOVED***                        *
+ *                                               *
+ * Author: Karan Sharma                          *
+ * ID: ***REMOVED***                                 *
+ * Email: ***REMOVED***                           *
+ *************************************************/
+ 
+ grammar A2Syntax;
 
 //---------------------------------------------------------------------------------------------------
 // Session 1: ANTLR tree plotting API, You SHOULD NOT make any modification to this session
@@ -403,12 +412,9 @@ fragment AlphaNum
 | Digit
 ;
 
-
 WhiteSpace
 : Delim+ -> skip
 ;
-
-
 
 Char
 : '\'' ~('\\') '\''
@@ -418,8 +424,6 @@ Char
 Str
 :'"' ((~('\\' | '"')) | ('\\'.))* '"'
 ; 
-
-
 
 Class
 : 'class'
@@ -465,13 +469,9 @@ DecNum
 : Digit+
 ;
 
-
 HexNum
 : '0x'HexDigit+
 ;
-
-
-
 
 BoolLit
 : 'true'
