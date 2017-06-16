@@ -19,7 +19,7 @@ import java.io.*;
 }
 
 @parser::members {
-    //AST node count
+	//AST node count
 	int count = 0;
 	String graph = "";
 
@@ -115,10 +115,10 @@ prog
 	}
 
 	try {
-        PrintGraph();
-    } catch (IOException e) {
-        // do nothing
-    }
+		PrintGraph();
+	} catch (IOException e) {
+		// do nothing
+	}
 }
 ;
 
@@ -148,10 +148,10 @@ field_decl returns [int id]
 }
 | f=field_decl ',' Ident '[' Num ']'
 {
-    $id = $f.id;
+	$id = $f.id;
 
-    PrintEdge($f.id, PrintNode($Ident.text));
-    PrintEdge($f.id, PrintNode($Num.text));
+	PrintEdge($f.id, PrintNode($Ident.text));
+	PrintEdge($f.id, PrintNode($Num.text));
 }
 | Type Ident
 {
@@ -162,7 +162,7 @@ field_decl returns [int id]
 }
 | Type Ident '[' Num ']'
 {
-    $id = PrintNode("Field_decl");
+	$id = PrintNode("Field_decl");
 
 	PrintEdge($id, PrintNode($Type.text));
 	PrintEdge($id, PrintNode($Ident.text));
@@ -284,6 +284,7 @@ var_decl returns [int id]
 | Type Ident
 {
 	$id = PrintNode("Var_decl");
+
 	PrintEdge($id, PrintNode($Type.text));
 	PrintEdge($id, PrintNode($Ident.text));
 }
@@ -311,6 +312,7 @@ statement returns [int id]
 : location assignOp expr ';'
 {
 	$id = PrintNode("Assign");
+
 	PrintEdge($id, $location.id);
 	PrintEdge($id, PrintNode($assignOp.text));
 	PrintEdge($id, $expr.id);
@@ -321,37 +323,39 @@ statement returns [int id]
 //}
 | If '(' expr ')' b1=block (Else b2=block)?
 {
-    $id = PrintNode("If");
-    PrintEdge($id, $expr.id);
-    PrintEdge($id, $b1.id);
+	$id = PrintNode("If");
 
-    if ($Else != null) {
-        PrintEdge($id, $b2.id);
-    }
+	PrintEdge($id, $expr.id);
+	PrintEdge($id, $b1.id);
+
+	if ($Else != null) {
+		PrintEdge($id, $b2.id);
+	}
 }
 | For Ident '=' e1=expr ',' e2=expr block
 {
-    $id = PrintNode("For");
-    PrintEdge($id, PrintNode($Ident.text));
-    PrintEdge($id, $e1.id);
-    PrintEdge($id, $e2.id);
-    PrintEdge($id, $block.id);
+	$id = PrintNode("For");
+
+	PrintEdge($id, PrintNode($Ident.text));
+	PrintEdge($id, $e1.id);
+	PrintEdge($id, $e2.id);
+	PrintEdge($id, $block.id);
 }
 | Ret (expr)? ';'
 {
-    $id = PrintNode("Ret");
+	$id = PrintNode("Ret");
 
-    if ($expr.ctx != null) {
-        PrintEdge($id, $expr.id);
-    }
+	if ($expr.ctx != null) {
+		PrintEdge($id, $expr.id);
+	}
 }
 | Brk ';'
 {
-    $id = PrintNode("Break");
+	$id = PrintNode("Break");
 }
 | Cnt ';'
 {
-    $id = PrintNode("Cont");
+	$id = PrintNode("Cont");
 }
 | block
 {
@@ -362,15 +366,15 @@ statement returns [int id]
 //method_call returns [int id]
 //: Ident '(' call_args ')'
 //{
-//    $id = PrintNode("User_meth");
+//	$id = PrintNode("User_meth");
 //
-//    PrintEdge($id, PrintNode($Ident.text));
-//    PrintEdges($id, $nextParams.s);
+//	PrintEdge($id, PrintNode($Ident.text));
+//	PrintEdges($id, $nextParams.s);
 //
 //}
 //| Callout '(' Str callout_args ')'
 //{
-//    $id = PrintNode("Ext_meth");
+//	$id = PrintNode("Ext_meth");
 //};
 //
 //callout_args returns [int id]
@@ -427,6 +431,7 @@ logical_or_expr returns [int id]
 : lo=logical_or_expr Or logical_and_expr
 {
 	$id = PrintNode("Bin_expr");
+
 	PrintEdge($id, $lo.id);
 	PrintEdge($id, PrintNode($Or.text));
 	PrintEdge($id, $logical_and_expr.id);
@@ -441,6 +446,7 @@ logical_and_expr returns [int id]
 : la=logical_and_expr And equality_expr
 {
 	$id = PrintNode("Bin_expr");
+
 	PrintEdge($id, $la.id);
 	PrintEdge($id, PrintNode($And.text));
 	PrintEdge($id, $equality_expr.id);
@@ -455,6 +461,7 @@ equality_expr returns [int id]
 : e=equality_expr EqOp rel_expr
 {
 	$id = PrintNode("Bin_expr");
+
 	PrintEdge($id, $e.id);
 	PrintEdge($id, PrintNode($EqOp.text));
 	PrintEdge($id, $rel_expr.id);
@@ -469,6 +476,7 @@ rel_expr returns [int id]
 : r=rel_expr RelOp additive_expr
 {
 	$id = PrintNode("Bin_expr");
+
 	PrintEdge($id, $r.id);
 	PrintEdge($id, PrintNode($RelOp.text));
 	PrintEdge($id, $additive_expr.id);
@@ -483,6 +491,7 @@ additive_expr returns [int id]
 : a=additive_expr addOp multiplicative_expr
 {
 	$id = PrintNode("Bin_expr");
+
 	PrintEdge($id, $a.id);
 	PrintEdge($id, PrintNode($addOp.text));
 	PrintEdge($id, $multiplicative_expr.id);
@@ -497,6 +506,7 @@ multiplicative_expr returns [int id]
 : m=multiplicative_expr MultOp unary_expr
 {
 	$id = PrintNode("Bin_expr");
+
 	PrintEdge($id, $m.id);
 	PrintEdge($id, PrintNode($MultOp.text));
 	PrintEdge($id, $unary_expr.id);
@@ -511,11 +521,13 @@ unary_expr returns [int id]
 : '-' u=unary_expr
 {
 	$id = PrintNode("Neg_expr");
+
 	PrintEdge($id, $u.id);
 }
 | '!' u=unary_expr
 {
 	$id = PrintNode("Not_expr");
+
 	PrintEdge($id, $u.id);
 }
 | primary_expr
@@ -528,11 +540,13 @@ primary_expr returns [int id]
 : literal
 {
 	$id = PrintNode("Const_expr");
+
 	PrintEdge($id, PrintNode($literal.text));
 }
 | location
 {
 	$id = PrintNode("Loc_expr");
+
 	PrintEdge($id, $location.id);
 }
 | '(' expr ')'
@@ -546,13 +560,15 @@ location returns [int id]
 :Ident
 {
 	$id = PrintNode("Loc");
+
 	PrintEdge($id, PrintNode($Ident.text));
 }
 | Ident '[' expr ']'
 {
-    $id = PrintNode("Array_loc");
-    PrintEdge($id, PrintNode($Ident.text));
-    PrintEdge($id, $expr.id);
+	$id = PrintNode("Array_loc");
+
+	PrintEdge($id, PrintNode($Ident.text));
+	PrintEdge($id, $expr.id);
 }
 ;
 
@@ -576,11 +592,6 @@ assignOp
 
 addOp
 : '+'
-| '-'
-;
-
-unaryOp
-: '!'
 | '-'
 ;
 
