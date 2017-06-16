@@ -100,7 +100,7 @@ import java.io.*;
 prog
 : Class Program '{' field_decls method_decls '}'
 {
-	int selfId = PrintNode("Program");
+	int selfId = PrintNode($Program.text);
 
 	if ($field_decls.s.size > 0) {
 		int fieldDeclId = PrintNode("Field_decls");
@@ -334,7 +334,7 @@ statement returns [int id]
 }
 | Ret (expr)? ';'
 {
-	$id = PrintNode("Ret");
+	$id = PrintNode($Ret.text);
 
 	if ($expr.ctx != null) {
 		PrintEdge($id, $expr.id);
@@ -342,11 +342,11 @@ statement returns [int id]
 }
 | Brk ';'
 {
-	$id = PrintNode("Break");
+	$id = PrintNode($Brk.text);
 }
 | Cnt ';'
 {
-	$id = PrintNode("Cont");
+	$id = PrintNode($Cnt.text);
 }
 | block
 {
