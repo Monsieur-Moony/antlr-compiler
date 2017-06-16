@@ -140,33 +140,24 @@ field_decls returns [MySet s]
 ;
 
 field_decl returns [int id]
-: f=field_decl ',' Ident
+: f=field_decl ',' Ident ('[' Num ']')?
 {
 	$id = $f.id;
 
 	PrintEdge($f.id, PrintNode($Ident.text));
+	if ($Num != null) {
+		PrintEdge($id, PrintNode($Num.text));
+	}
 }
-| f=field_decl ',' Ident '[' Num ']'
-{
-	$id = $f.id;
-
-	PrintEdge($f.id, PrintNode($Ident.text));
-	PrintEdge($f.id, PrintNode($Num.text));
-}
-| Type Ident
+| Type Ident ('[' Num ']')?
 {
 	$id = PrintNode("Field_decl");
 
 	PrintEdge($id, PrintNode($Type.text));
 	PrintEdge($id, PrintNode($Ident.text));
-}
-| Type Ident '[' Num ']'
-{
-	$id = PrintNode("Field_decl");
-
-	PrintEdge($id, PrintNode($Type.text));
-	PrintEdge($id, PrintNode($Ident.text));
-	PrintEdge($id, PrintNode($Num.text));
+	if ($Num != null) {
+		PrintEdge($id, PrintNode($Num.text));
+	}
 }
 ;
 
