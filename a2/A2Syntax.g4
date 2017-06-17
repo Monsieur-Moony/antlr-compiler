@@ -426,6 +426,16 @@ next_call_args returns [MySet s]
 	$s = new MySet();
 };
 
+
+// Precedence levels (low to high):
+// 		||
+// 		&&
+// 		== !=
+// 		< <= > >=
+// 		+ -
+// 		* / %
+// 		- ! <unary>
+// 		<method call> <literal> <location> ()
 expr returns [int id]
 : logical_or_expr
 {
