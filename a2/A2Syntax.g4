@@ -414,7 +414,8 @@ callout_args returns [MySet s]
 |
 {
     $s = new MySet();
-};
+}
+;
 
 callout_arg returns [int id]
 : expr
@@ -428,7 +429,8 @@ callout_arg returns [int id]
     $id = PrintNode(ASTNode_StringArg);
 
     PrintEdge($id, PrintNode(ProcessString($Str.text)));
-};
+}
+;
 
 call_args returns [int id]
 : expr next_call_args
@@ -443,7 +445,8 @@ call_args returns [int id]
 |
 {
     $id = -1;
-};
+}
+;
 
 next_call_args returns [MySet s]
 : n=next_call_args ',' expr
@@ -457,7 +460,8 @@ next_call_args returns [MySet s]
 |
 {
     $s = new MySet();
-};
+}
+;
 
 
 // Precedence levels (low to high):
