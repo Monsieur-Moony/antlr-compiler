@@ -94,9 +94,9 @@ grammar A2Syntax;
     // Constants for use as labels of AST nodes
     public static final String ASTNode_Program          = "Program";
     public static final String ASTNode_FieldDecls       = "Field_decls";
-    public static final String ASTNode_MethodDecls      = "Method_decls";
     public static final String ASTNode_FieldDecl        = "Field_decl";
     public static final String ASTNode_InitedFieldDecl  = "Inited_field_decl";
+    public static final String ASTNode_MethodDecls      = "Method_decls";
     public static final String ASTNode_MethodDecl       = "Method_decl";
     public static final String ASTNode_MethodArgs       = "Method_args";
     public static final String ASTNode_Block            = "Block";
@@ -105,24 +105,24 @@ grammar A2Syntax;
     public static final String ASTNode_Seq              = "Seq";
     public static final String ASTNode_Assign           = "Assign";
     public static final String ASTNode_Call             = "Call";
-    public static final String ASTNode_IfElse           = "If_Else";
     public static final String ASTNode_If               = "If";
+    public static final String ASTNode_IfElse           = "If_Else";
     public static final String ASTNode_For              = "For";
     public static final String ASTNode_Ret              = "Ret";
     public static final String ASTNode_Brk              = "Break";
     public static final String ASTNode_Cont             = "Cont";
     public static final String ASTNode_UserMeth         = "User_meth";
     public static final String ASTNode_ExtMeth          = "Ext_meth";
+    public static final String ASTNode_Loc              = "Loc";
+    public static final String ASTNode_ArrayLoc         = "Array_loc";
+    public static final String ASTNode_LocExpr          = "Loc_expr";
     public static final String ASTNode_CallExpr         = "Call_expr";
-    public static final String ASTNode_StringArg        = "String_arg";
-    public static final String ASTNode_ExprArg          = "Expr_arg";
+    public static final String ASTNode_ConstExpr        = "Const_expr";
     public static final String ASTNode_BinExpr          = "Bin_expr";
     public static final String ASTNode_NegExpr          = "Neg_expr";
     public static final String ASTNode_NotExpr          = "Not_expr";
-    public static final String ASTNode_ConstExpr        = "Const_expr";
-    public static final String ASTNode_LocExpr          = "Loc_expr";
-    public static final String ASTNode_Loc              = "Loc";
-    public static final String ASTNode_ArrayLoc         = "Array_loc";
+    public static final String ASTNode_StringArg        = "String_arg";
+    public static final String ASTNode_ExprArg          = "Expr_arg";
 }
 
 //---------------------------------------------------------------------------------------------------
