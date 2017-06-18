@@ -1,0 +1,11 @@
+class Program {
+    int arr[100];
+    int sum = 0;
+    void setSum(int arr, int sum) {
+        for i = 0, i <= len(arr) {
+            sum += arr[i];    
+        }
+        callout("printf", "arr is ", stringify(arr, getMean(arr), getMedian(arr)), "sum", 100);
+        return 0;
+    }    
+}

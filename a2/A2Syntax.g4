@@ -92,10 +92,11 @@ grammar A2Syntax;
     }
 
     // Constants for use as labels of AST nodes
+    public static final String ASTNode_Program          = "Program";
     public static final String ASTNode_FieldDecls       = "Field_decls";
     public static final String ASTNode_MethodDecls      = "Method_decls";
     public static final String ASTNode_FieldDecl        = "Field_decl";
-    public static final String ASTNode_InitedFieldDecl = "Inited_field_decl";
+    public static final String ASTNode_InitedFieldDecl  = "Inited_field_decl";
     public static final String ASTNode_MethodDecl       = "Method_decl";
     public static final String ASTNode_MethodArgs       = "Method_args";
     public static final String ASTNode_Block            = "Block";
@@ -107,6 +108,9 @@ grammar A2Syntax;
     public static final String ASTNode_IfElse           = "If_Else";
     public static final String ASTNode_If               = "If";
     public static final String ASTNode_For              = "For";
+    public static final String ASTNode_Ret              = "Ret";
+    public static final String ASTNode_Brk              = "Break";
+    public static final String ASTNode_Cont             = "Cont";
     public static final String ASTNode_UserMeth         = "User_meth";
     public static final String ASTNode_ExtMeth          = "Ext_meth";
     public static final String ASTNode_CallExpr         = "Call_expr";
@@ -127,7 +131,7 @@ grammar A2Syntax;
 prog
 : Class Program '{' field_decls method_decls '}'
 {
-    int selfId = PrintNode($Program.text);
+    int selfId = PrintNode(ASTNode_Program);
 
     if ($field_decls.s.size > 0) {
         int fieldDeclId = PrintNode(ASTNode_FieldDecls);
@@ -364,7 +368,7 @@ statement returns [int id]
 }
 | Ret (expr)? ';'
 {
-    $id = PrintNode($Ret.text);
+    $id = PrintNode(ASTNode_Ret);
 
     if ($expr.ctx != null) {
         PrintEdge($id, $expr.id);
@@ -372,11 +376,11 @@ statement returns [int id]
 }
 | Brk ';'
 {
-    $id = PrintNode($Brk.text);
+    $id = PrintNode(ASTNode_Brk);
 }
 | Cnt ';'
 {
-    $id = PrintNode($Cnt.text);
+    $id = PrintNode(ASTNode_Cont);
 }
 | block
 {
@@ -462,7 +466,6 @@ next_call_args returns [MySet s]
     $s = new MySet();
 }
 ;
-
 
 // Precedence levels (low to high):
 //      ||

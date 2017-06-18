@@ -1,0 +1,9 @@
+class Program {
+    boolean isEven = false;
+    void isEvenNum(int num1) {
+        if (num1 % 2 == 0) {
+            isEven = true;    
+        }
+        return;
+    }
+}
