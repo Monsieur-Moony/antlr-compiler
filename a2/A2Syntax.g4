@@ -14,8 +14,7 @@ grammar A2Syntax;
 // Session 1: ANTLR tree plotting API, You SHOULD NOT make any modification to this session
 //---------------------------------------------------------------------------------------------------
 @header {
-
-import java.io.*;
+	import java.io.*;
 }
 
 @parser::members {
@@ -91,8 +90,36 @@ import java.io.*;
 
 		System.out.println("digraph G {\nordering=out\n" + graph + "\n}\n");
 	}
-}
 
+	// Constants for use as labels of AST nodes
+	public static final String ASTNode_FieldDecls 		= "Field_decls";
+	public static final String ASTNode_MethodDecls 		= "Method_decls";
+	public static final String ASTNode_FieldDecl 		= "Field_decl";
+	public static final String ASTNode_InitedFieldDecl = "Inited_field_decl";
+	public static final String ASTNode_MethodDecl 		= "Method_decl";
+	public static final String ASTNode_MethodArgs 		= "Method_args";
+	public static final String ASTNode_Block 			= "Block";
+	public static final String ASTNode_VarDecls 		= "Var_decls";
+	public static final String ASTNode_VarDecl 			= "Var_decl";
+	public static final String ASTNode_Seq 				= "Seq";
+	public static final String ASTNode_Assign 			= "Assign";
+	public static final String ASTNode_Call 			= "Call";
+	public static final String ASTNode_IfElse 			= "If_Else";
+	public static final String ASTNode_If 				= "If";
+	public static final String ASTNode_For 				= "For";
+	public static final String ASTNode_UserMeth 		= "User_meth";
+	public static final String ASTNode_ExtMeth 			= "Ext_meth";
+	public static final String ASTNode_CallExpr 		= "Call_expr";
+	public static final String ASTNode_StringArg 		= "String_arg";
+	public static final String ASTNode_ExprArg 			= "Expr_arg";
+	public static final String ASTNode_BinExpr 			= "Bin_expr";
+	public static final String ASTNode_NegExpr 			= "Neg_expr";
+	public static final String ASTNode_NotExpr 			= "Not_expr";
+	public static final String ASTNode_ConstExpr 		= "Const_expr";
+	public static final String ASTNode_LocExpr 			= "Loc_expr";
+	public static final String ASTNode_Loc 				= "Loc";
+	public static final String ASTNode_ArrayLoc 		= "Array_loc";
+}
 
 //---------------------------------------------------------------------------------------------------
 // Session 2: Fill the Grammer definition here
@@ -103,13 +130,13 @@ prog
 	int selfId = PrintNode($Program.text);
 
 	if ($field_decls.s.size > 0) {
-		int fieldDeclId = PrintNode("Field_decls");
+		int fieldDeclId = PrintNode(ASTNode_FieldDecls);
 		PrintEdges(fieldDeclId, $field_decls.s);
 		PrintEdge(selfId, fieldDeclId);
 	}
 
 	if ($method_decls.s.size > 0) {
-		int methodDeclId = PrintNode("Method_decls");
+		int methodDeclId = PrintNode(ASTNode_MethodDecls);
 		PrintEdges(methodDeclId, $method_decls.s);
 		PrintEdge(selfId, methodDeclId);
 	}
@@ -151,7 +178,7 @@ field_decl returns [int id]
 }
 | Type Ident ('[' Num ']')?
 {
-	$id = PrintNode("Field_decl");
+	$id = PrintNode(ASTNode_FieldDecl);
 
 	PrintEdge($id, PrintNode($Type.text));
 	PrintEdge($id, PrintNode($Ident.text));
@@ -164,7 +191,7 @@ field_decl returns [int id]
 inited_field_decl returns [int id]
 : Type Ident '=' literal
 {
-	$id = PrintNode("Inited_field_decl");
+	$id = PrintNode(ASTNode_InitedFieldDecl);
 
 	PrintEdge($id, PrintNode($Type.text));
 	PrintEdge($id, PrintNode($Ident.text));
@@ -187,7 +214,7 @@ method_decls returns [MySet s]
 method_decl returns [int id]
 : Type Ident '(' params ')' block
 {
-	$id = PrintNode("Method_decl");
+	$id = PrintNode(ASTNode_MethodDecl);
 
 	PrintEdge($id, PrintNode($Type.text));
 	PrintEdge($id, PrintNode($Ident.text));
@@ -196,7 +223,7 @@ method_decl returns [int id]
 }
 | Void Ident '(' params ')' block
 {
-	$id = PrintNode("Method_decl");
+	$id = PrintNode(ASTNode_MethodDecl);
 
 	PrintEdge($id, PrintNode($Void.text));
 	PrintEdge($id, PrintNode($Ident.text));
@@ -208,7 +235,7 @@ method_decl returns [int id]
 params returns [int id]
 : Type Ident nextParams
 {
-	$id = PrintNode("Method_args");
+	$id = PrintNode(ASTNode_MethodArgs);
 	
 	PrintEdge($id, PrintNode($Type.text));
 	PrintEdge($id, PrintNode($Ident.text));
@@ -239,13 +266,13 @@ block returns [int id]
 {
 	$id = -1;
 	if ($var_decls.s.size > 0) {
-		$id = PrintNode("Block");
-		int id2 = PrintNode("Var_decls");
+		$id = PrintNode(ASTNode_Block);
+		int id2 = PrintNode(ASTNode_VarDecls);
 		PrintEdges(id2, $var_decls.s);
 		PrintEdge($id, id2);
 	}
 	if ($statements.id != -1) {
-		if ($id == -1) $id = PrintNode("Block");
+		if ($id == -1) $id = PrintNode(ASTNode_Block);
 		PrintEdge($id, $statements.id);
 	}
 }
@@ -283,7 +310,7 @@ statements returns [int id]
 : statement t=statements
 {
 	if ($t.id != -1) {
-		$id = PrintNode("Seq");
+		$id = PrintNode(ASTNode_Seq);
 		PrintEdge($id, $statement.id);
 		PrintEdge($id, $t.id);
 	} else {
@@ -299,7 +326,7 @@ statements returns [int id]
 statement returns [int id]
 : location assignOp expr ';'
 {
-	$id = PrintNode("Assign");
+	$id = PrintNode(ASTNode_Assign);
 
 	PrintEdge($id, $location.id);
 	PrintEdge($id, PrintNode($assignOp.text));
@@ -307,16 +334,16 @@ statement returns [int id]
 }
 | method_call ';'
 {
-	$id = PrintNode("Call");
+	$id = PrintNode(ASTNode_Call);
 
 	PrintEdge($id, $method_call.id);
 }
 | If '(' expr ')' b1=block (Else b2=block)?
 {
 	if ($Else != null) {
-		$id = PrintNode("If_Else");
+		$id = PrintNode(ASTNode_IfElse);
 	} else {
-		$id = PrintNode("If");
+		$id = PrintNode(ASTNode_If);
 	}
 
 	PrintEdge($id, $expr.id);
@@ -328,7 +355,7 @@ statement returns [int id]
 }
 | For Ident '=' e1=expr ',' e2=expr block
 {
-	$id = PrintNode("For");
+	$id = PrintNode(ASTNode_For);
 
 	PrintEdge($id, PrintNode($Ident.text));
 	PrintEdge($id, $e1.id);
@@ -360,17 +387,19 @@ statement returns [int id]
 method_call returns [int id]
 : Ident '(' call_args ')'
 {
-	$id = PrintNode("User_meth");
+	$id = PrintNode(ASTNode_UserMeth);
 
 	PrintEdge($id, PrintNode($Ident.text));
 	PrintEdge($id, $call_args.id);
 }
 | Callout '(' Str callout_args ')'
 {
-	$id = PrintNode("Ext_meth");
-	int callExprId = PrintNode("Call_expr");
+	$id = PrintNode(ASTNode_ExtMeth);
+	int callExprId = PrintNode(ASTNode_CallExpr);
+	int stringArgId = PrintNode(ASTNode_StringArg);
 
-	PrintEdge($id, PrintNode(ProcessString($Str.text)));
+	PrintEdge($id, stringArgId);
+	PrintEdge(stringArgId, PrintNode(ProcessString($Str.text)));
 	PrintEdge($id, callExprId);
 	PrintEdges(callExprId, $callout_args.s);
 }
@@ -390,13 +419,13 @@ callout_args returns [MySet s]
 callout_arg returns [int id]
 : expr
 {
-	$id = PrintNode("Expr_arg");
+	$id = PrintNode(ASTNode_ExprArg);
 
 	PrintEdge($id, $expr.id);
 }
 | Str
 {
-	$id = PrintNode("String_arg");
+	$id = PrintNode(ASTNode_StringArg);
 
 	PrintEdge($id, PrintNode(ProcessString($Str.text)));
 };
@@ -404,9 +433,9 @@ callout_arg returns [int id]
 call_args returns [int id]
 : expr next_call_args
 {
-	$id = PrintNode("Call_expr");
+	$id = PrintNode(ASTNode_CallExpr);
 
-	int exprArgId = PrintNode("Expr_arg");
+	int exprArgId = PrintNode(ASTNode_ExprArg);
 	PrintEdge(exprArgId, $expr.id);
 	PrintEdge($id, exprArgId);
 	PrintEdges($id, $next_call_args.s);
@@ -420,7 +449,7 @@ next_call_args returns [MySet s]
 : n=next_call_args ',' expr
 {
 	$s = $n.s;
-	int exprArgId = PrintNode("Expr_arg");
+	int exprArgId = PrintNode(ASTNode_ExprArg);
 
 	PrintEdge(exprArgId, $expr.id);
 	$s.ExtendArray(exprArgId);
@@ -450,7 +479,7 @@ expr returns [int id]
 logical_or_expr returns [int id]
 : lo=logical_or_expr Or logical_and_expr
 {
-	$id = PrintNode("Bin_expr");
+	$id = PrintNode(ASTNode_BinExpr);
 
 	PrintEdge($id, $lo.id);
 	PrintEdge($id, PrintNode($Or.text));
@@ -465,7 +494,7 @@ logical_or_expr returns [int id]
 logical_and_expr returns [int id]
 : la=logical_and_expr And equality_expr
 {
-	$id = PrintNode("Bin_expr");
+	$id = PrintNode(ASTNode_BinExpr);
 
 	PrintEdge($id, $la.id);
 	PrintEdge($id, PrintNode($And.text));
@@ -480,7 +509,7 @@ logical_and_expr returns [int id]
 equality_expr returns [int id]
 : e=equality_expr EqOp rel_expr
 {
-	$id = PrintNode("Bin_expr");
+	$id = PrintNode(ASTNode_BinExpr);
 
 	PrintEdge($id, $e.id);
 	PrintEdge($id, PrintNode($EqOp.text));
@@ -495,7 +524,7 @@ equality_expr returns [int id]
 rel_expr returns [int id]
 : r=rel_expr RelOp additive_expr
 {
-	$id = PrintNode("Bin_expr");
+	$id = PrintNode(ASTNode_BinExpr);
 
 	PrintEdge($id, $r.id);
 	PrintEdge($id, PrintNode($RelOp.text));
@@ -510,7 +539,7 @@ rel_expr returns [int id]
 additive_expr returns [int id]
 : a=additive_expr addOp multiplicative_expr
 {
-	$id = PrintNode("Bin_expr");
+	$id = PrintNode(ASTNode_BinExpr);
 
 	PrintEdge($id, $a.id);
 	PrintEdge($id, PrintNode($addOp.text));
@@ -525,7 +554,7 @@ additive_expr returns [int id]
 multiplicative_expr returns [int id]
 : m=multiplicative_expr MultOp unary_expr
 {
-	$id = PrintNode("Bin_expr");
+	$id = PrintNode(ASTNode_BinExpr);
 
 	PrintEdge($id, $m.id);
 	PrintEdge($id, PrintNode($MultOp.text));
@@ -540,13 +569,13 @@ multiplicative_expr returns [int id]
 unary_expr returns [int id]
 : '-' u=unary_expr
 {
-	$id = PrintNode("Neg_expr");
+	$id = PrintNode(ASTNode_NegExpr);
 
 	PrintEdge($id, $u.id);
 }
 | '!' u=unary_expr
 {
-	$id = PrintNode("Not_expr");
+	$id = PrintNode(ASTNode_NotExpr);
 
 	PrintEdge($id, $u.id);
 }
@@ -559,19 +588,19 @@ unary_expr returns [int id]
 primary_expr returns [int id]
 : method_call
 {
-	$id = PrintNode("Call");
+	$id = PrintNode(ASTNode_Call);
 
 	PrintEdge($id, $method_call.id);
 }
 | literal
 {
-	$id = PrintNode("Const_expr");
+	$id = PrintNode(ASTNode_ConstExpr);
 
 	PrintEdge($id, PrintNode($literal.text));
 }
 | location
 {
-	$id = PrintNode("Loc_expr");
+	$id = PrintNode(ASTNode_LocExpr);
 
 	PrintEdge($id, $location.id);
 }
@@ -584,13 +613,13 @@ primary_expr returns [int id]
 location returns [int id]
 :Ident
 {
-	$id = PrintNode("Loc");
+	$id = PrintNode(ASTNode_Loc);
 
 	PrintEdge($id, PrintNode($Ident.text));
 }
 | Ident '[' expr ']'
 {
-	$id = PrintNode("Array_loc");
+	$id = PrintNode(ASTNode_ArrayLoc);
 
 	PrintEdge($id, PrintNode($Ident.text));
 	PrintEdge($id, $expr.id);
