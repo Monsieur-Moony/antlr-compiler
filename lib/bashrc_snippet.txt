@@ -2,3 +2,10 @@ antlr_jar_path='e:\git\compilers\lib\antlr-4.5.3-complete.jar'
 export CLASSPATH=".;$antlr_jar_path"
 alias antlr4='java -Xmx500M org.antlr.v4.Tool'
 alias grun='java org.antlr.v4.gui.TestRig'
+
+test_parser() {
+    [[ -r $1 ]] && make clean && make &&
+        python parse_syntax_tree.py "$1" "$1.png" &&
+        cygstart "$1.png" && echo === && cat "$1" && echo === &&
+        read -p "Press any key ..." && rm "$1.png"
+}

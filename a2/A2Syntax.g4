@@ -313,7 +313,11 @@ statement returns [int id]
 }
 | If '(' expr ')' b1=block (Else b2=block)?
 {
-	$id = PrintNode("If");
+	if ($Else != null) {
+		$id = PrintNode("If_Else");
+	} else {
+		$id = PrintNode("If");
+	}
 
 	PrintEdge($id, $expr.id);
 	PrintEdge($id, $b1.id);
