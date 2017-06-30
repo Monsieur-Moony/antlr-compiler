@@ -9,3 +9,10 @@ test_parser() {
         cygstart "$1.png" && echo === && cat "$1" && echo === &&
         read -p "Press any key ..." && rm "$1.png"
 }
+
+gen_code() {
+    [[ -r $1 ]] && make clean && make &&
+        python generate_code.py "$1" "$1.out" &&
+        echo === && cat "$1" && echo === && cat "$1.out" &&
+        echo === && read -p "Press any key ..." && rm "$1.out"
+}
