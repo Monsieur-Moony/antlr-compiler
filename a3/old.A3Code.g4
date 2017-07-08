@@ -1,13 +1,3 @@
-/*************************************************
- * Course: CMPT 379 Compilers - Summer 2017      *
- * Instructor: ***REMOVED*** ***REMOVED***                        *
- *                                               *
- * Author: Karan Sharma                          *
- * ID: ***REMOVED***                                 *
- * Email: ***REMOVED***                           *
- *************************************************/
-// NOTE: Changes to Sessions 1 and 3 were made with the instructor's permission
-
 grammar A3Code;
 
 //---------------------------------------------------------------------------------------------------
@@ -18,13 +8,20 @@ grammar A3Code;
 import java.io.*;
 }
 
+
+
 @parser::members {
 
 public enum DataType {
 	INT, BOOLEAN, INVALID
 }
 
+
+
+
+
 public class Symbol {
+	
 	String name;
 	DataType dt;
 
@@ -53,9 +50,13 @@ public class Symbol {
 	void Print() {
 		System.out.println(name + "\t" + dt);
 	}
+
+	
+	
 }
 
 public class SymTab {
+	
 	Symbol st[];
 	int size;
 	int temps;
@@ -77,7 +78,7 @@ public class SymTab {
 	int insert(String n, DataType d) {
 		int id = Find(n);
 		if (id != -1) return id;
-
+	
 		st[size] = new Symbol(n, d);
 		return (size ++);
 	}
@@ -103,16 +104,23 @@ public class SymTab {
 			st[i].Print();
 		}
 	}
+
+	
+
 }
 
 SymTab s = new SymTab();
 
+
+
 public class Quad {
+
 	int label;
 	String op;
 	int src1;
 	int src2;
 	int dst;
+
 
 	Quad (int l, int d, int s1, int s2, String o) {
 		label = l;
@@ -126,9 +134,11 @@ public class Quad {
 		System.out.println("L_" + label + ": " + s.GetName(dst) + " = " 
 				+ s.GetName(src1) + " " + op + " " + s.GetName(src2));
 	}
+
 }
 
 public class QuadTab {
+
 	Quad qt[];
 	int size;
 
@@ -137,7 +147,10 @@ public class QuadTab {
 		size = 0;
 	}
 
+	
+
 	int Add(int dst, int src1, int src2, String op) {
+			
 		qt[size] = new Quad(size, dst, src1, src2, op);
 		return (size ++);
 	}
@@ -147,11 +160,17 @@ public class QuadTab {
 			qt[i].Print();
 		}
 	}
+
+
 }
+
+
 
 QuadTab q = new QuadTab();
 
 }
+
+
 
 //---------------------------------------------------------------------------------------------------
 // Session 2: Fill your code here
@@ -170,6 +189,7 @@ field_decls
 | 
 ;
 
+
 field_decl returns [DataType t]
 : f=field_decl ',' Ident
 {
@@ -184,12 +204,17 @@ field_decl returns [DataType t]
 }
 ;
 
+
+
+
 method_decl 
 : Type Ident '('  ')' block
 {
 	s.insert($Ident.text, DataType.valueOf($Type.text.toUpperCase()));
 }
 ;
+
+
 
 block 
 : '{' var_decls statements '}'
@@ -199,6 +224,7 @@ var_decls
 : v=var_decls var_decl ';'
 | 
 ;
+
 
 var_decl returns [DataType t]
 : v=var_decl ',' Ident
@@ -214,10 +240,13 @@ var_decl returns [DataType t]
 }
 ;
 
+
+
 statements 
 : statement t=statements
 |
 ;
+
 
 statement 
 : location '=' expr ';'
@@ -225,6 +254,7 @@ statement
 	q.Add($location.id, $expr.id, -1, "=");
 }
 ;
+
 
 expr returns [int id]
 : literal 
@@ -242,12 +272,14 @@ expr returns [int id]
 }
 ;
 
+
 location returns [int id]
 :Ident
 {
 	$id = s.Find($Ident.text);
 }
 ;
+
 
 num
 : DecNum
@@ -261,6 +293,7 @@ literal returns [int id]
 }
 ;
 //--------------------------------------------- END OF SESSION 2 -----------------------------------
+
 
 //---------------------------------------------------------------------------------------------------
 // Session 3: Lexical definition, You SHOULD NOT make any modification to this session
@@ -295,9 +328,12 @@ fragment AlphaNum
 | Digit
 ;
 
+
 WhiteSpace
 : Delim+ -> skip
 ;
+
+
 
 Char
 : '\'' ~('\\') '\''
@@ -307,6 +343,8 @@ Char
 Str
 :'"' ((~('\\' | '"')) | ('\\'.))* '"'
 ; 
+
+
 
 Class
 : 'class'
@@ -352,9 +390,15 @@ DecNum
 : Digit+
 ;
 
+
 HexNum
 : '0x'HexDigit+
 ;
+
+
+
+
+
 
 Type
 : 'int'
@@ -364,3 +408,9 @@ Type
 Ident
 : Alpha AlphaNum* 
 ;
+
+
+
+
+
+
