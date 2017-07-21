@@ -1,1 +1,8 @@
-class Program {}
+class Program {
+    int a , b, c;
+    int main() {
+        a = a + b + c;
+        a = b - -c;
+        a = a + b * c;
+    }
+}

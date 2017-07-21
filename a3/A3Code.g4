@@ -15,11 +15,23 @@ grammar A3Code;
 //---------------------------------------------------------------------------------------------------
 @header {
 	import java.io.*;
+	import java.util.ArrayList;
+	import java.util.List;
 }
 
 @parser::members {
 	public enum DataType {
-		INT, BOOLEAN, INVALID
+		VOID(0), INT(4), BOOLEAN(1), INVALID(0);
+
+		private int numBytes;
+
+		DataType(int numBytes) {
+			this.numBytes = numBytes;
+		}
+
+		public int getNumBytes() {
+			return numBytes;
+		}
 	}
 
 	public class Symbol {
@@ -153,12 +165,19 @@ grammar A3Code;
 			sb.append(label);
 			sb.append(": ");
 			sb.append(symbolTable.getName(dst));
-			sb.append(" = ");
-			sb.append(symbolTable.getName(src1));
-			sb.append(" ");
-			sb.append(op);
-			sb.append(" ");
-			sb.append(symbolTable.getName(src2));
+			if (op.equals("param")) {
+				sb.append(" ");
+				sb.append(op);
+			} else {
+				sb.append(" = ");
+				sb.append(symbolTable.getName(src1));
+				if (src2 != -1) {
+					sb.append(" ");
+					sb.append(op);
+					sb.append(" ");
+					sb.append(symbolTable.getName(src2));
+				}
+			}
 			return sb.toString();
 		}
 	}
@@ -193,7 +212,7 @@ grammar A3Code;
 // Session 2: Fill your code here
 //---------------------------------------------------------------------------------------------------
 prog
-: Class Program '{' field_decls method_decl '}'
+: Class Program '{' field_decls method_decls '}'
 {
 	System.out.print(symbolTable);
 	System.out.println("------------------------------------");
@@ -203,7 +222,17 @@ prog
 
 field_decls 
 : f=field_decls field_decl ';'
-| 
+{
+
+}
+| f=field_decls inited_field_decl ';'
+{
+
+}
+|
+{
+
+}
 ;
 
 field_decl returns [DataType t]
@@ -212,18 +241,70 @@ field_decl returns [DataType t]
 	$t = $f.t;
 	symbolTable.addUserVariable($Ident.text, $t);
 }
+| f=field_decl ',' Ident '[' num ']'
+{
+
+}
 | Type Ident
 {
 	$t = DataType.valueOf($Type.text.toUpperCase());
 	symbolTable.addUserVariable($Ident.text, $t);
 	
 }
+| Type Ident '[' num ']'
+{
+
+}
 ;
 
-method_decl 
-: Type Ident '('  ')' block
+inited_field_decl returns [int id]
+: Type Ident '=' literal
+{
+
+}
+;
+
+method_decls returns [int id]
+: m=method_decls method_decl
+{
+
+}
+|
+{
+	
+}
+;
+
+method_decl
+: Type Ident '(' params ')' block
 {
 	symbolTable.addUserVariable($Ident.text, DataType.valueOf($Type.text.toUpperCase()));
+}
+| Void Ident '(' params ')' block
+{
+	symbolTable.addUserVariable($Ident.text, DataType.VOID);
+}
+;
+
+params
+: Type Ident nextParams
+{
+
+}
+|
+{
+
+}
+;
+
+nextParams
+: n=nextParams ',' Type Ident
+{
+
+}
+|
+{
+
 }
 ;
 
@@ -255,15 +336,100 @@ statements
 |
 ;
 
-statement 
-: location '=' expr ';'
+// TODO: previously the rule was "location '=' expr ';'"
+statement
+: location eqOp expr ';'
 {
 	quadTable.add($location.id, $expr.id, -1, "=");
+}
+| If '(' expr ')' block
+{
+
+}
+| If '(' expr ')' b1=block Else b2=block
+{
+
+}
+| For Ident '=' e1=expr ',' e2=expr block
+{
+
+}
+| Ret ';'
+{
+
+}
+| Ret '(' expr ')' ';'
+{
+
+}
+| Brk ';'
+{
+
+}
+| Cnt ';'
+{
+
+}
+| block
+{
+
+}
+| methodCall ';'
+{
+
+}
+;
+
+methodCall
+: Ident '(' args ')'
+{
+	
+}
+| Callout '(' Str calloutArgs ')'
+{
+
+}
+;
+
+args
+: someArgs
+{
+
+}
+|
+{
+
+}
+;
+
+someArgs
+: t=someArgs ',' expr
+{
+
+}
+| expr
+{
+
+}
+;
+
+calloutArgs
+: c=calloutArgs ',' expr
+{
+
+}
+| c=calloutArgs ',' Str
+{
+
+}
+|
+{
+
 }
 ;
 
 expr returns [int id]
-: literal 
+: literal
 {
 	$id = $literal.id;
 }
@@ -271,18 +437,71 @@ expr returns [int id]
 {
 	$id = $location.id;
 }
-| e1=expr '+' e2=expr
+| '(' e=expr ')'
+{
+	$id = $e.id;
+}
+| SubOp e=expr
+{
+	$id = symbolTable.addTemporary(symbolTable.getType($e.id));
+	int zeroSymbol = symbolTable.addUserVariable("0", DataType.INT);
+    quadTable.add($id, zeroSymbol, $e.id, $SubOp.text);
+}
+// | '!' e=expr
+// {
+// 	$id = symbolTable.addTemporary(symbolTable.getType($e1.id));
+//     quadTable.add($id, $e1.id, $e2.id, $MulDiv.text);
+
+// 	$id = PrintNode("Not_expr");
+// 	PrintEdge($id, $e.id);
+// }
+| e1=expr MulDiv e2=expr
 {
 	$id = symbolTable.addTemporary(symbolTable.getType($e1.id));
-	quadTable.add($id, $e1.id, $e2.id, "+");
+    quadTable.add($id, $e1.id, $e2.id, $MulDiv.text);
 }
+| e1=expr AddOp e2=expr
+{
+	$id = symbolTable.addTemporary(symbolTable.getType($e1.id));
+    quadTable.add($id, $e1.id, $e2.id, $AddOp.text);
+}
+| e1=expr SubOp e2=expr
+{
+	$id = symbolTable.addTemporary(symbolTable.getType($e1.id));
+    quadTable.add($id, $e1.id, $e2.id, $SubOp.text);
+}
+| e1=expr RelOp e2=expr
+{
+	$id = symbolTable.addTemporary(symbolTable.getType($e1.id));
+    quadTable.add($id, $e1.id, $e2.id, $RelOp.text);
+}
+//| e1=expr AndOp e2=expr
+//{
+//	$id = symbolTable.addTemporary(symbolTable.getType($e1.id));
+//    quadTable.add($id, $e1.id, $e2.id, $AndOp.text);
+//}
+//| e1=expr OrOp e2=expr
+//{
+//	$id = symbolTable.addTemporary(symbolTable.getType($e1.id));
+//    quadTable.add($id, $e1.id, $e2.id, $OrOp.text);
+//}
+//| methodCall
+//{
+//	$id = PrintNode("Call_expr");
+//
+//	PrintEdge($id, $methodCall.id);
+//}
 ;
 
 location returns [int id]
-:Ident
+: Ident
 {
 	$id = symbolTable.find($Ident.text);
 }
+// | Ident '[' expr ']'
+// {
+
+// }
 ;
 
 num
@@ -295,7 +514,15 @@ literal returns [int id]
 {
 	$id = symbolTable.addUserVariable($num.text, DataType.INT);
 }
+// | Char
+// | BoolLit
 ;
+
+eqOp
+: '='
+| AssignOp
+;
+
 //--------------------------------------------- END OF SESSION 2 -----------------------------------
 
 //---------------------------------------------------------------------------------------------------
@@ -305,6 +532,7 @@ fragment Delim
 : ' '
 | '\t'
 | '\n'
+| '\r'
 ;
 
 fragment Letter
