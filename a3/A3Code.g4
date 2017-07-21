@@ -21,7 +21,10 @@ grammar A3Code;
 
 @parser::members {
 	public enum DataType {
-		VOID(0), INT(4), BOOLEAN(1), INVALID(0);
+		VOID(0),
+		INT(4),
+		BOOLEAN(1),
+		INVALID(0);
 
 		private int numBytes;
 
@@ -89,46 +92,45 @@ grammar A3Code;
 			this.temporariesCounter = 0;
 		}
 
-		public int addUserVariable(String name, DataType type) {
-			int oldSize = symbols.size();
+		public Symbol addUserVariable(String name, DataType type) {
 			Symbol newSymbol = new Symbol(name, type);
-			int newSymbolIndex = symbols.indexOf(newSymbol);
-			if (newSymbolIndex >= 0) {
-				return newSymbolIndex;
+			int symbolIdx = symbols.indexOf(newSymbol);
+			if (symbolIdx >= 0) {
+				return symbols.get(symbolIdx);
 			}
 			symbols.add(newSymbol);
-			return oldSize;
+			return newSymbol;
 		}
 
-		public int addTemporary(DataType type) {
-			int oldSize = symbols.size();
-			symbols.add(new Symbol(temporariesCounter, type));
+		public Symbol addTemporary(DataType type) {
+			Symbol newSymbol = new Symbol(temporariesCounter, type);
+			symbols.add(newSymbol);
 			temporariesCounter++;
-			return oldSize;
+			return newSymbol;
 		}
 
-		public int find(String name) {
+		public Symbol lookup(String name) {
 			for (int i = 0; i < symbols.size(); i++) {
-				String currentSymbolName = symbols.get(i).getName();
-				if (currentSymbolName.equals(name)) {
-					return i;
+				Symbol currentSymbol = symbols.get(i);
+				if (currentSymbol.getName().equals(name)) {
+					return currentSymbol;
 				}
 			}
-			return -1;
+			return null;
 		}
 
-		public DataType getType(int index) {
-			if (index < 0) {
+		public DataType getType(Symbol symbol) {
+			if (symbol == null) {
 				return DataType.INVALID;
 			}
-			return symbols.get(index).getType();
+			return symbol.getType();
 		}
 
-		public String getName(int index) {
-			if (index < 0) {
+		public String getName(Symbol symbol) {
+			if (symbol == null) {
 				return "";
 			}
-			return symbols.get(index).getName();
+			return symbol.getName();
 		}
 
 		@Override
@@ -146,11 +148,11 @@ grammar A3Code;
 	public class Quad {
 		private int label;
 		private String op;
-		private int src1;
-		private int src2;
-		private int dst;
+		private Symbol src1;
+		private Symbol src2;
+		private Symbol dst;
 
-		Quad (int label, int dst, int src1, int src2, String op) {
+		Quad (int label, Symbol dst, Symbol src1, Symbol src2, String op) {
 			this.label = label;
 			this.dst = dst;
 			this.src1 = src1;
@@ -171,7 +173,7 @@ grammar A3Code;
 			} else {
 				sb.append(" = ");
 				sb.append(symbolTable.getName(src1));
-				if (src2 != -1) {
+				if (src2 != null) {
 					sb.append(" ");
 					sb.append(op);
 					sb.append(" ");
@@ -189,10 +191,10 @@ grammar A3Code;
 			quads = new ArrayList<>(initialCapacity);
 		}
 
-		public int add(int dst, int src1, int src2, String op) {
-			int oldSize = quads.size();
-			quads.add(new Quad(oldSize, dst, src1, src2, op));
-			return oldSize;
+		public Quad add(Symbol dst, Symbol src1, Symbol src2, String op) {
+			Quad newQuad = new Quad(quads.size(), dst, src1, src2, op);
+			quads.add(newQuad);
+			return newQuad;
 		}
 
 		@Override
@@ -340,7 +342,7 @@ statements
 statement
 : location eqOp expr ';'
 {
-	quadTable.add($location.id, $expr.id, -1, "=");
+	quadTable.add($location.id, $expr.id, null, "=");
 }
 | If '(' expr ')' block
 {
@@ -428,7 +430,7 @@ calloutArgs
 }
 ;
 
-expr returns [int id]
+expr returns [Symbol id]
 : literal
 {
 	$id = $literal.id;
@@ -444,7 +446,7 @@ expr returns [int id]
 | SubOp e=expr
 {
 	$id = symbolTable.addTemporary(symbolTable.getType($e.id));
-	int zeroSymbol = symbolTable.addUserVariable("0", DataType.INT);
+	Symbol zeroSymbol = symbolTable.addUserVariable("0", DataType.INT);
     quadTable.add($id, zeroSymbol, $e.id, $SubOp.text);
 }
 // | '!' e=expr
@@ -493,10 +495,10 @@ expr returns [int id]
 //}
 ;
 
-location returns [int id]
+location returns [Symbol id]
 : Ident
 {
-	$id = symbolTable.find($Ident.text);
+	$id = symbolTable.lookup($Ident.text);
 }
 // | Ident '[' expr ']'
 // {
@@ -509,7 +511,7 @@ num
 | HexNum
 ;
 
-literal returns [int id]
+literal returns [Symbol id]
 : num
 {
 	$id = symbolTable.addUserVariable($num.text, DataType.INT);
