@@ -22,11 +22,12 @@ grammar A3Code;
 		INT, BOOLEAN, INVALID
 	}
 
-	public static final String TEMP_VAR_PREFIX = "~t";
 
 	public class Symbol {
 		private String name;
 		private DataType type;
+
+		private static final String TEMP_VAR_PREFIX = "~t";
 
 		public Symbol(String name, DataType type) {
 			this.name = name;
@@ -39,11 +40,11 @@ grammar A3Code;
 		}
 
 		public DataType getType() {
-			return this.type;
+			return type;
 		}
 
 		public String getName() {
-			return this.name;
+			return name;
 		}
 
 		@Override
@@ -57,167 +58,136 @@ grammar A3Code;
 
 		@Override
 		public int hashCode() {
-			return this.name.hashCode();
+			return name.hashCode();
 		}
 
 		@Override
 		public String toString() {
-			return this.name + "\t" + this.type;
+			return name + "\t" + type;
 		}
 	}
 
-	public static final int INITIAL_MAX_SYMBOLS = 100;
-	public static final int CAPACITY_EXPAND_FACTOR = 2;
+	public static final int INITIAL_CAPACITY = 1000;
 
 	public class SymbolTable {
-		private int symbols[];
-		private int size;
-		private int capacity;
+		private List<Symbol> symbols;
 		private int temporariesCounter;
 
-		public SymbolTable(int capacity) {
-			this.capacity = capacity;
-			this.size = 0;
-			this.symbols = new Symbol[this.capacity];
+		public SymbolTable(int initialCapacity) {
+			this.symbols = new ArrayList<>(initialCapacity);
 			this.temporariesCounter = 0;
 		}
 
-		private void expandCapacity() {
-			capacity = capacity * CAPACITY_EXPAND_FACTOR;
-			tempSymbols = this.symbols;
-			this.symbols = new Symbol[this.capacity];
-			for (int i = 0; i < capacity; i++) {
-				this.symbols[i] = tempSymbols[i];
-			}
-		}
-
 		public int addUserVariable(String name, DataType type) {
-			if (size + 1 > capacity) {
-				this.expandCapacity();
+			int oldSize = symbols.size();
+			Symbol newSymbol = new Symbol(name, type);
+			int newSymbolIndex = symbols.indexOf(newSymbol);
+			if (newSymbolIndex >= 0) {
+				return newSymbolIndex;
 			}
-			// check if newSymbol exists in table already, return null if true
-			symbols[size] = new Symbol(name, type);
-			return size++;
+			symbols.add(newSymbol);
+			return oldSize;
 		}
 
 		public int addTemporary(DataType type) {
-			if (size + 1 > capacity) {
-				this.expandCapacity();
-			}
-			symbols[size] = new Symbol(temporariesCounter, type);
+			int oldSize = symbols.size();
+			symbols.add(new Symbol(temporariesCounter, type));
 			temporariesCounter++;
-			return size++;
+			return oldSize;
+		}
+
+		public int find(String name) {
+			for (int i = 0; i < symbols.size(); i++) {
+				String currentSymbolName = symbols.get(i).getName();
+				if (currentSymbolName.equals(name)) {
+					return i;
+				}
+			}
+			return -1;
 		}
 
 		public DataType getType(int index) {
-			return (index < 0 ? DataType.INVALID : symbols[index].getType());
+			if (index < 0) {
+				return DataType.INVALID;
+			}
+			return symbols.get(index).getType();
+		}
+
+		public String getName(int index) {
+			if (index < 0) {
+				return "";
+			}
+			return symbols.get(index).getName();
 		}
 
 		@Override
 		public String toString() {
 			StringBuilder sb = new StringBuilder();
 			for (Symbol symbol : symbols) {
-				sb.append(symbol + "\n")
+				sb.append(symbol + "\n");
 			}
 			return sb.toString();
 		}
 	}
 
-	public class SymTab {
-		Symbol st[];
-		int size;
-		int temps;
-
-		SymTab () {
-			st = new Symbol[1000];
-			size = 0;
-			temps = 0;
-		}
-
-		int Find (String n) {
-			for (int  i = 0; i < size; i ++) {
-				if (st[i].Equal(n)) return i;
-			}
-			
-			return -1;
-		}
-
-		int insert(String n, DataType d) {
-			int id = Find(n);
-			if (id != -1) return id;
-
-			st[size] = new Symbol(n, d);
-			return (size ++);
-		}
-
-		int Add (DataType d) {
-			st [size] = new Symbol (temps, d);
-			temps ++;
-			return (size ++);
-		}
-
-		DataType GetType (int id) {
-			if (id == -1) return DataType.INVALID;
-			return (st[id].GetType());
-		}
-
-		String GetName (int id) {
-			if (id == -1) return ("");
-			return (st[id].GetName()); 
-		}
-
-		void Print() {
-			for (int  i = 0; i < size; i ++) {
-				st[i].Print();
-			}
-		}
-	}
-
-	SymTab s = new SymTab();
+	public SymbolTable symbolTable = new SymbolTable(INITIAL_CAPACITY);
 
 	public class Quad {
-		int label;
-		String op;
-		int src1;
-		int src2;
-		int dst;
+		private int label;
+		private String op;
+		private int src1;
+		private int src2;
+		private int dst;
 
-		Quad (int l, int d, int s1, int s2, String o) {
-			label = l;
-			dst = d;
-			src1 = s1;
-			src2 = s2;
-			op = o;
+		Quad (int label, int dst, int src1, int src2, String op) {
+			this.label = label;
+			this.dst = dst;
+			this.src1 = src1;
+			this.src2 = src2;
+			this.op = op;
 		}
 
-		void Print () {
-			System.out.println("L_" + label + ": " + s.GetName(dst) + " = " 
-					+ s.GetName(src1) + " " + op + " " + s.GetName(src2));
+		@Override
+		public String toString() {
+			StringBuilder sb = new StringBuilder();
+			sb.append("L_");
+			sb.append(label);
+			sb.append(": ");
+			sb.append(symbolTable.getName(dst));
+			sb.append(" = ");
+			sb.append(symbolTable.getName(src1));
+			sb.append(" ");
+			sb.append(op);
+			sb.append(" ");
+			sb.append(symbolTable.getName(src2));
+			return sb.toString();
 		}
 	}
 
-	public class QuadTab {
-		Quad qt[];
-		int size;
+	public class QuadTable {
+		private List<Quad> quads;
 
-		QuadTab () {
-			qt = new Quad[1000];
-			size = 0;
+		QuadTable (int initialCapacity) {
+			quads = new ArrayList<>(initialCapacity);
 		}
 
-		int Add(int dst, int src1, int src2, String op) {
-			qt[size] = new Quad(size, dst, src1, src2, op);
-			return (size ++);
+		public int add(int dst, int src1, int src2, String op) {
+			int oldSize = quads.size();
+			quads.add(new Quad(oldSize, dst, src1, src2, op));
+			return oldSize;
 		}
 
-		void Print() {
-			for (int  i = 0; i < size; i ++) {
-				qt[i].Print();
+		@Override
+		public String toString() {
+			StringBuilder sb = new StringBuilder();
+			for (Quad quad : quads) {
+				sb.append(quad + "\n");
 			}
+			return sb.toString();
 		}
 	}
 
-	QuadTab q = new QuadTab();
+	public QuadTable quadTable = new QuadTable(INITIAL_CAPACITY);
 }
 
 //---------------------------------------------------------------------------------------------------
@@ -226,9 +196,9 @@ grammar A3Code;
 prog
 : Class Program '{' field_decls method_decl '}'
 {
-	s.Print();
+	System.out.print(symbolTable);
 	System.out.println("------------------------------------");
-	q.Print();
+	System.out.print(quadTable);
 }
 ;
 
@@ -241,12 +211,12 @@ field_decl returns [DataType t]
 : f=field_decl ',' Ident
 {
 	$t = $f.t;
-	s.insert($Ident.text, $t);
+	symbolTable.addUserVariable($Ident.text, $t);
 }
 | Type Ident
 {
 	$t = DataType.valueOf($Type.text.toUpperCase());
-	s.insert($Ident.text, $t);					
+	symbolTable.addUserVariable($Ident.text, $t);
 	
 }
 ;
@@ -254,7 +224,7 @@ field_decl returns [DataType t]
 method_decl 
 : Type Ident '('  ')' block
 {
-	s.insert($Ident.text, DataType.valueOf($Type.text.toUpperCase()));
+	symbolTable.addUserVariable($Ident.text, DataType.valueOf($Type.text.toUpperCase()));
 }
 ;
 
@@ -271,12 +241,12 @@ var_decl returns [DataType t]
 : v=var_decl ',' Ident
 {
 	$t = $v.t;
-	s.insert($Ident.text, $t);
+	symbolTable.addUserVariable($Ident.text, $t);
 }
 | Type Ident
 {
 	$t = DataType.valueOf($Type.text.toUpperCase());
-	s.insert($Ident.text, $t);					
+	symbolTable.addUserVariable($Ident.text, $t);
 	
 }
 ;
@@ -289,7 +259,7 @@ statements
 statement 
 : location '=' expr ';'
 {
-	q.Add($location.id, $expr.id, -1, "=");
+	quadTable.add($location.id, $expr.id, -1, "=");
 }
 ;
 
@@ -304,15 +274,15 @@ expr returns [int id]
 }
 | e1=expr '+' e2=expr
 {
-	$id = s.Add(s.GetType($e1.id));
-	q.Add($id, $e1.id, $e2.id, "+");
+	$id = symbolTable.addTemporary(symbolTable.GetType($e1.id));
+	quadTable.add($id, $e1.id, $e2.id, "+");
 }
 ;
 
 location returns [int id]
 :Ident
 {
-	$id = s.Find($Ident.text);
+	$id = symbolTable.find($Ident.text);
 }
 ;
 
@@ -324,7 +294,7 @@ num
 literal returns [int id]
 : num
 {
-	$id = s.insert($num.text, DataType.INT);
+	$id = symbolTable.addUserVariable($num.text, DataType.INT);
 }
 ;
 //--------------------------------------------- END OF SESSION 2 -----------------------------------
