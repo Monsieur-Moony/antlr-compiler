@@ -22,7 +22,6 @@ grammar A3Code;
 		INT, BOOLEAN, INVALID
 	}
 
-
 	public class Symbol {
 		private String name;
 		private DataType type;
@@ -274,7 +273,7 @@ expr returns [int id]
 }
 | e1=expr '+' e2=expr
 {
-	$id = symbolTable.addTemporary(symbolTable.GetType($e1.id));
+	$id = symbolTable.addTemporary(symbolTable.getType($e1.id));
 	quadTable.add($id, $e1.id, $e2.id, "+");
 }
 ;
@@ -393,6 +392,11 @@ HexNum
 : '0x'HexDigit+
 ;
 
+BoolLit
+: 'true'
+| 'false'
+;
+
 Type
 : 'int'
 | 'boolean'
@@ -400,4 +404,40 @@ Type
 
 Ident
 : Alpha AlphaNum* 
+;
+
+RelOp
+: '<='
+| '>='
+| '<'
+| '>'
+| '=='
+| '!='
+;
+
+AssignOp
+: '+='
+| '-='
+;
+
+MulDiv
+: '*'
+| '/'
+| '%'
+;
+
+AddOp
+: '+'
+;
+
+SubOp
+: '-'
+;
+
+AndOp
+: '&&'
+;
+
+OrOp
+: '||'
 ;
