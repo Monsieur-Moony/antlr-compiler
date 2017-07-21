@@ -351,11 +351,22 @@ statements
 |
 ;
 
-// TODO: previously the rule was "location '=' expr ';'"
 statement
-: location eqOp expr ';'
+: location '=' expr ';'
 {
 	quadTable.add($location.id, $expr.id, null, "=");
+}
+| location '+=' expr ';'
+{
+	Symbol temp = symbolTable.addTemporary(symbolTable.getType($location.id));
+	quadTable.add(temp, $location.id, $expr.id, "+");
+	quadTable.add($location.id, temp, null, "=");
+}
+| location '-=' expr ';'
+{
+	Symbol temp = symbolTable.addTemporary(symbolTable.getType($location.id));
+	quadTable.add(temp, $location.id, $expr.id, "-");
+	quadTable.add($location.id, temp, null, "=");
 }
 | If '(' expr ')' block
 {
@@ -533,11 +544,6 @@ literal returns [Symbol id]
 // | BoolLit
 ;
 
-eqOp
-: '='
-| AssignOp
-;
-
 //--------------------------------------------- END OF SESSION 2 -----------------------------------
 
 //---------------------------------------------------------------------------------------------------
@@ -656,11 +662,6 @@ RelOp
 | '>'
 | '=='
 | '!='
-;
-
-AssignOp
-: '+='
-| '-='
 ;
 
 MulDiv
