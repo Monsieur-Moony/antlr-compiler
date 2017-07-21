@@ -204,8 +204,8 @@ grammar A3Code;
 			return newQuad;
 		}
 
-		public Quad add(Symbol function) {
-			return this.add(function, null, null, "");
+		public Quad add(Symbol method) {
+			return this.add(method, null, null, "");
 		}
 
 		@Override
@@ -291,13 +291,13 @@ method_decls returns [int id]
 method_decl
 : Type Ident
 {
-	Symbol function = symbolTable.addUserVariable($Ident.text, DataType.valueOf($Type.text.toUpperCase()));
-	quadTable.add(function);
+	Symbol method = symbolTable.addUserVariable($Ident.text, DataType.valueOf($Type.text.toUpperCase()));
+	quadTable.add(method);
 } '(' params ')' block
 | Void Ident
 {
-	Symbol function = symbolTable.addUserVariable($Ident.text, DataType.VOID);
-	quadTable.add(function);
+	Symbol method = symbolTable.addUserVariable($Ident.text, DataType.VOID);
+	quadTable.add(method);
 } '(' params ')' block
 ;
 
