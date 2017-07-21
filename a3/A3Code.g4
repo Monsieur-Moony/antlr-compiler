@@ -163,21 +163,28 @@ grammar A3Code;
 		@Override
 		public String toString() {
 			StringBuilder sb = new StringBuilder();
-			sb.append("L_");
-			sb.append(label);
-			sb.append(": ");
-			sb.append(symbolTable.getName(dst));
-			if (op.equals("param")) {
-				sb.append(" ");
-				sb.append(op);
+			if (src1 == null && src2 == null) { // eg. <function_name>:
+				sb.append(symbolTable.getName(dst));
+				sb.append(":");
 			} else {
-				sb.append(" = ");
-				sb.append(symbolTable.getName(src1));
-				if (src2 != null) {
+				sb.append("L_");
+				sb.append(label);
+				sb.append(": ");
+				sb.append(symbolTable.getName(dst));
+				if (op.equals("param")) { // eg. L_0: <symbol_name> param
 					sb.append(" ");
 					sb.append(op);
-					sb.append(" ");
-					sb.append(symbolTable.getName(src2));
+				} else {
+					sb.append(" = ");
+					sb.append(symbolTable.getName(src1));
+					// Check to prevent trailing " = " for assignment quads
+					// eg. L_0: <var> = <value>
+					if (!op.equals("=")) {
+						sb.append(" ");
+						sb.append(op);
+						sb.append(" ");
+						sb.append(symbolTable.getName(src2));
+					}
 				}
 			}
 			return sb.toString();
@@ -195,6 +202,10 @@ grammar A3Code;
 			Quad newQuad = new Quad(quads.size(), dst, src1, src2, op);
 			quads.add(newQuad);
 			return newQuad;
+		}
+
+		public Quad add(Symbol function) {
+			return this.add(function, null, null, "");
 		}
 
 		@Override
@@ -278,14 +289,16 @@ method_decls returns [int id]
 ;
 
 method_decl
-: Type Ident '(' params ')' block
+: Type Ident
 {
-	symbolTable.addUserVariable($Ident.text, DataType.valueOf($Type.text.toUpperCase()));
-}
-| Void Ident '(' params ')' block
+	Symbol function = symbolTable.addUserVariable($Ident.text, DataType.valueOf($Type.text.toUpperCase()));
+	quadTable.add(function);
+} '(' params ')' block
+| Void Ident
 {
-	symbolTable.addUserVariable($Ident.text, DataType.VOID);
-}
+	Symbol function = symbolTable.addUserVariable($Ident.text, DataType.VOID);
+	quadTable.add(function);
+} '(' params ')' block
 ;
 
 params
