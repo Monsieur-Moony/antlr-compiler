@@ -5,4 +5,12 @@ class Program {
         a = b - -c;
         a = a + b * c;
     }
+    void foo() {
+        boolean c;
+        c += 10;
+    }
+    void bar() {
+        boolean d;
+        d += 111;
+    }
 }

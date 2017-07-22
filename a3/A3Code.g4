@@ -41,7 +41,7 @@ grammar A3Code;
 		private String name;
 		private DataType type;
 
-		private static final String TEMP_VAR_PREFIX = "~t";
+		private static final String TEMP_VAR_PREFIX = "t~";
 
 		public Symbol(String name, DataType type) {
 			this.name = name;
@@ -81,23 +81,30 @@ grammar A3Code;
 		}
 	}
 
-	public static final int INITIAL_CAPACITY = 1000;
+	public static final int INITIAL_CAPACITY = 100;
+	public static int temporariesCounter = 0;
 
 	public class SymbolTable {
+		private SymbolTable parent;
+		private List<SymbolTable> children;
 		private List<Symbol> symbols;
-		private int temporariesCounter;
 
-		public SymbolTable(int initialCapacity) {
-			this.symbols = new ArrayList<>(initialCapacity);
-			this.temporariesCounter = 0;
+		public SymbolTable(SymbolTable parent) {
+			this.parent = parent;
+			this.children = new ArrayList<>();
+			this.symbols = new ArrayList<>(INITIAL_CAPACITY);
+		}
+
+		public SymbolTable() {
+			this(null);
 		}
 
 		public Symbol addUserVariable(String name, DataType type) {
-			Symbol newSymbol = new Symbol(name, type);
-			int symbolIdx = symbols.indexOf(newSymbol);
-			if (symbolIdx >= 0) {
-				return symbols.get(symbolIdx);
+			Symbol foundSymbol = searchList(name);
+			if (foundSymbol != null) {
+				return foundSymbol;
 			}
+			Symbol newSymbol = new Symbol(name, type);
 			symbols.add(newSymbol);
 			return newSymbol;
 		}
@@ -109,7 +116,7 @@ grammar A3Code;
 			return newSymbol;
 		}
 
-		public Symbol lookup(String name) {
+		private Symbol searchList(String name) {
 			for (int i = 0; i < symbols.size(); i++) {
 				Symbol currentSymbol = symbols.get(i);
 				if (currentSymbol.getName().equals(name)) {
@@ -117,6 +124,26 @@ grammar A3Code;
 				}
 			}
 			return null;
+		}
+
+		public Symbol lookup(String name) {
+			for (SymbolTable s = this; s != null; s = s.getParent()) {
+				Symbol foundSymbol = s.searchList(name);
+				if (foundSymbol != null) {
+					return foundSymbol;
+				}
+			}
+			return null;
+		}
+
+		public SymbolTable createChild() {
+			SymbolTable child = new SymbolTable(this);
+			this.children.add(child);
+			return child;
+		}
+
+		public SymbolTable getParent() {
+			return this.parent;
 		}
 
 		public DataType getType(Symbol symbol) {
@@ -137,13 +164,27 @@ grammar A3Code;
 		public String toString() {
 			StringBuilder sb = new StringBuilder();
 			for (Symbol symbol : symbols) {
-				sb.append(symbol + "\n");
+				sb.append(symbol);
+				sb.append("\n");
+			}
+			for (int i = 0; i < children.size(); i++) {
+				SymbolTable currentSymTab = children.get(i);
+				sb.append("\n");
+				sb.append(currentSymTab);
 			}
 			return sb.toString();
 		}
 	}
 
-	public SymbolTable symbolTable = new SymbolTable(INITIAL_CAPACITY);
+	public SymbolTable symbolTable = new SymbolTable();
+
+	public void createScope() {
+		symbolTable = symbolTable.createChild();
+	}
+
+	public void exitScope() {
+		symbolTable = symbolTable.getParent();
+	}
 
 	public class Quad {
 		private int label;
@@ -194,8 +235,8 @@ grammar A3Code;
 	public class QuadTable {
 		private List<Quad> quads;
 
-		QuadTable (int initialCapacity) {
-			quads = new ArrayList<>(initialCapacity);
+		QuadTable () {
+			quads = new ArrayList<>(INITIAL_CAPACITY);
 		}
 
 		public Quad add(Symbol dst, Symbol src1, Symbol src2, String op) {
@@ -218,7 +259,7 @@ grammar A3Code;
 		}
 	}
 
-	public QuadTable quadTable = new QuadTable(INITIAL_CAPACITY);
+	public QuadTable quadTable = new QuadTable();
 }
 
 //---------------------------------------------------------------------------------------------------
@@ -324,7 +365,7 @@ nextParams
 ;
 
 block 
-: '{' var_decls statements '}'
+: '{' { createScope(); } var_decls statements '}' { exitScope(); }
 ;
 
 var_decls 
@@ -342,7 +383,6 @@ var_decl returns [DataType t]
 {
 	$t = DataType.valueOf($Type.text.toUpperCase());
 	symbolTable.addUserVariable($Ident.text, $t);
-	
 }
 ;
 
