@@ -340,7 +340,8 @@ field_decl returns [DataType t]
 | f=field_decl ',' Ident '[' num ']'
 {
 	$t = $f.t;
-	symbolTable.addUserVariable($Ident.text, $t);
+	DataType compoundType = new DataType($t.getElem(), $num.text);
+	symbolTable.addUserVariable($Ident.text, compoundType);
 }
 | Type Ident
 {
@@ -349,8 +350,10 @@ field_decl returns [DataType t]
 }
 | Type Ident '[' num ']'
 {
-	$t = new DataType(ElemType.valueOf($Type.text.toUpperCase()), $num.text);
-	symbolTable.addUserVariable($Ident.text, $t);
+	ElemType baseType = ElemType.valueOf($Type.text.toUpperCase());
+	$t = new DataType(baseType);
+	DataType compoundType = new DataType(baseType, $num.text);
+	symbolTable.addUserVariable($Ident.text, compoundType);
 }
 ;
 
