@@ -235,7 +235,7 @@ grammar A3Code;
 		@Override
 		public String toString() {
 			StringBuilder sb = new StringBuilder();
-			if (dst != null && src1 == null && src2 == null) { // eg. <function_name>:
+			if (op.equals("method")) { // eg. <function_name>:
 				sb.append(symbolTable.getName(dst));
 				sb.append(":");
 			} else {
@@ -248,9 +248,24 @@ grammar A3Code;
 						sb.append(" ");
 						sb.append(symbolTable.getName(src1));
 					}
+				} else if (op.equals("[]=")) { // array write
+					sb.append(symbolTable.getName(dst));
+					sb.append("[ ");
+					sb.append(symbolTable.getName(src1));
+					sb.append(" ]");
+					sb.append(" = ");
+					sb.append(symbolTable.getName(src2));
+				} else if (op.equals("=[]")) { // array read
+					sb.append(symbolTable.getName(dst));
+					sb.append(" = ");
+					sb.append(symbolTable.getName(src1));
+					sb.append("[ ");
+					sb.append(symbolTable.getName(src2));
+					sb.append(" ]");
 				} else {
 					sb.append(symbolTable.getName(dst));
 					if (op.equals("param")) { // eg. L_0: <symbol_name> param
+						sb.append(symbolTable.getName(src1));
 						sb.append(" ");
 						sb.append(op);
 					} else {
@@ -282,10 +297,6 @@ grammar A3Code;
 			Quad newQuad = new Quad(quads.size(), dst, src1, src2, op);
 			quads.add(newQuad);
 			return newQuad;
-		}
-
-		public Quad add(Symbol method) {
-			return this.add(method, null, null, "");
 		}
 
 		@Override
@@ -362,13 +373,13 @@ method_decl
 {
 	DataType type = new DataType(ElemType.valueOf($Type.text.toUpperCase()));
 	Symbol method = symbolTable.addUserVariable($Ident.text, type);
-	quadTable.add(method);
+	quadTable.add(method, null, null, "method");
 } '(' params ')' block
 | Void Ident
 {
 	DataType type = new DataType(ElemType.VOID);
 	Symbol method = symbolTable.addUserVariable($Ident.text, type);
-	quadTable.add(method);
+	quadTable.add(method, null, null, "method");
 } '(' params ')' block
 ;
 
@@ -476,9 +487,6 @@ statement
 
 }
 | block
-{
-
-}
 | methodCall ';'
 {
 
@@ -488,7 +496,9 @@ statement
 methodCall
 : Ident '(' args ')'
 {
-	
+	Symbol function = symbolTable.lookup($Ident.text);
+	Symbol count = symbolTable.addIntConstant(String.valueOf($args.count));
+	quadTable.add(null, function, count, "call");
 }
 | Callout '(' Str calloutArgs ')'
 {
@@ -496,25 +506,27 @@ methodCall
 }
 ;
 
-args
+args returns [int count]
 : someArgs
 {
-
+	$count = $someArgs.count;
 }
 |
 {
-
+	$count = 0;
 }
 ;
 
-someArgs
+someArgs returns [int count]
 : t=someArgs ',' expr
 {
-
+	quadTable.add(null, $expr.id, null, "param");
+	$count = $t.count + 1;
 }
 | expr
 {
-
+	quadTable.add(null, $expr.id, null, "param");
+	$count = 1;
 }
 ;
 
@@ -540,9 +552,13 @@ expr returns [Symbol id]
 }
 | location
 {
-	DataType type = new DataType(symbolTable.getType($location.id).getElem());
-	$id = symbolTable.addTemporary(type);
-	quadTable.add($id, $location.id, $location.offset, "=[]");
+	if ($location.offset == null) { // non-array location
+		$id = $location.id;
+	} else {
+		DataType type = new DataType(symbolTable.getType($location.id).getElem());
+		$id = symbolTable.addTemporary(type);
+		quadTable.add($id, $location.id, $location.offset, "=[]");
+	}
 }
 | '(' e=expr ')'
 {
