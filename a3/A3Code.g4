@@ -253,7 +253,8 @@ grammar A3Code;
 		public String toString() {
 			StringBuilder sb = new StringBuilder();
 			for (Quad quad : quads) {
-				sb.append(quad + "\n");
+				sb.append(quad);
+				sb.append("\n");
 			}
 			return sb.toString();
 		}
