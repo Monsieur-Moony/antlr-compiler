@@ -2,7 +2,6 @@ class Program {
     int c, a[2];
     int b = 'X';
     int main() {
-        a[1] -= 5;
-        b -= 10;
+        return (10+4);
     }
 }

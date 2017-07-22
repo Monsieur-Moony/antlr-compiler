@@ -235,27 +235,35 @@ grammar A3Code;
 		@Override
 		public String toString() {
 			StringBuilder sb = new StringBuilder();
-			if (src1 == null && src2 == null) { // eg. <function_name>:
+			if (dst != null && src1 == null && src2 == null) { // eg. <function_name>:
 				sb.append(symbolTable.getName(dst));
 				sb.append(":");
 			} else {
 				sb.append("L_");
 				sb.append(label);
 				sb.append(": ");
-				sb.append(symbolTable.getName(dst));
-				if (op.equals("param")) { // eg. L_0: <symbol_name> param
-					sb.append(" ");
+				if (op.equals("ret")) {
 					sb.append(op);
+					if (src1 != null) {
+						sb.append(" ");
+						sb.append(symbolTable.getName(src1));
+					}
 				} else {
-					sb.append(" = ");
-					sb.append(symbolTable.getName(src1));
-					// Check to prevent trailing " = " for assignment quads
-					// eg. L_0: <var> = <value>
-					if (!op.equals("=")) {
+					sb.append(symbolTable.getName(dst));
+					if (op.equals("param")) { // eg. L_0: <symbol_name> param
 						sb.append(" ");
 						sb.append(op);
-						sb.append(" ");
-						sb.append(symbolTable.getName(src2));
+					} else {
+						sb.append(" = ");
+						sb.append(symbolTable.getName(src1));
+						// Check to prevent trailing " = " for assignment quads
+						// eg. L_0: <var> = <value>
+						if (!op.equals("=")) {
+							sb.append(" ");
+							sb.append(op);
+							sb.append(" ");
+							sb.append(symbolTable.getName(src2));
+						}
 					}
 				}
 			}
@@ -453,11 +461,11 @@ statement
 }
 | Ret ';'
 {
-
+    quadTable.add(null, null, null, "ret");
 }
 | Ret '(' expr ')' ';'
 {
-
+    quadTable.add(null, $expr.id, null, "ret");
 }
 | Brk ';'
 {
