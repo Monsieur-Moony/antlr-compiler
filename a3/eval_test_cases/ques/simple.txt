@@ -1,7 +1,6 @@
 class Program {
-    int a=10;
-    boolean b;
+    int a[2];
     int main() {
-        a -= 20 / 10 + 3;
+
     }
 }

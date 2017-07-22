@@ -20,20 +20,46 @@ grammar A3Code;
 }
 
 @parser::members {
-	public enum DataType {
+	public enum ElemType {
 		VOID(0),
 		INT(4),
 		BOOLEAN(1),
 		INVALID(0);
 
-		private int numBytes;
+		private String width;
 
-		DataType(int numBytes) {
-			this.numBytes = numBytes;
+		ElemType(int width) {
+			this.width = String.valueOf(width);
 		}
 
-		public int getNumBytes() {
-			return numBytes;
+		public String getWidth() {
+			return width;
+		}
+	}
+
+	public class DataType {
+		private ElemType elemType;
+		private String size;
+
+		public DataType(ElemType elemType, String size) {
+			this.elemType = elemType;
+			this.size = size;
+		}
+
+		public DataType(ElemType elemType) {
+			this(elemType, null);
+		}
+
+		public ElemType getElem() {
+			return elemType;
+		}
+
+		@Override
+		public String toString() {
+			if (size != null) {
+				return "ARRAY(" + size + "," + elemType + ")";
+			}
+			return elemType.toString();
 		}
 	}
 
@@ -148,7 +174,7 @@ grammar A3Code;
 
 		public DataType getType(Symbol symbol) {
 			if (symbol == null) {
-				return DataType.INVALID;
+				return new DataType(ElemType.INVALID);
 			}
 			return symbol.getType();
 		}
@@ -277,17 +303,8 @@ prog
 
 field_decls 
 : f=field_decls field_decl ';'
-{
-
-}
 | f=field_decls inited_field_decl ';'
-{
-
-}
 |
-{
-
-}
 ;
 
 field_decl returns [DataType t]
@@ -298,23 +315,25 @@ field_decl returns [DataType t]
 }
 | f=field_decl ',' Ident '[' num ']'
 {
-
+	// $t = $f.t;
+	// symbolTable.addUserVariable($Ident.text, $t);
 }
 | Type Ident
 {
-	$t = DataType.valueOf($Type.text.toUpperCase());
+	$t = new DataType(ElemType.valueOf($Type.text.toUpperCase()));
 	symbolTable.addUserVariable($Ident.text, $t);
 }
 | Type Ident '[' num ']'
 {
-
+	$t = new DataType(ElemType.valueOf($Type.text.toUpperCase()), $num.text);
+	symbolTable.addUserVariable($Ident.text, $t);
 }
 ;
 
 inited_field_decl
 : Type Ident '=' literal
 {
-	DataType type = DataType.valueOf($Type.text.toUpperCase());
+	DataType type = new DataType(ElemType.valueOf($Type.text.toUpperCase()));
 	Symbol decl = symbolTable.addUserVariable($Ident.text, type);
 	quadTable.add(decl, $literal.id, null, "=");
 }
@@ -334,12 +353,14 @@ method_decls returns [int id]
 method_decl
 : Type Ident
 {
-	Symbol method = symbolTable.addUserVariable($Ident.text, DataType.valueOf($Type.text.toUpperCase()));
+	DataType type = new DataType(ElemType.valueOf($Type.text.toUpperCase()));
+	Symbol method = symbolTable.addUserVariable($Ident.text, type);
 	quadTable.add(method);
 } '(' params ')' block
 | Void Ident
 {
-	Symbol method = symbolTable.addUserVariable($Ident.text, DataType.VOID);
+	DataType type = new DataType(ElemType.VOID);
+	Symbol method = symbolTable.addUserVariable($Ident.text, type);
 	quadTable.add(method);
 } '(' params ')' block
 ;
@@ -383,7 +404,7 @@ var_decl returns [DataType t]
 }
 | Type Ident
 {
-	$t = DataType.valueOf($Type.text.toUpperCase());
+	$t = new DataType(ElemType.valueOf($Type.text.toUpperCase()));
 	symbolTable.addUserVariable($Ident.text, $t);
 }
 ;
@@ -512,7 +533,7 @@ expr returns [Symbol id]
 | SubOp e=expr
 {
 	$id = symbolTable.addTemporary(symbolTable.getType($e.id));
-	Symbol zeroSymbol = symbolTable.addUserVariable("0", DataType.INT);
+	Symbol zeroSymbol = symbolTable.addUserVariable("0", new DataType(ElemType.INT));
     quadTable.add($id, zeroSymbol, $e.id, $SubOp.text);
 }
 // | '!' e=expr
@@ -566,10 +587,16 @@ location returns [Symbol id]
 {
 	$id = symbolTable.lookup($Ident.text);
 }
-// | Ident '[' expr ']'
-// {
-
-// }
+| Ident '[' expr ']'
+{
+	$id = symbolTable.lookup($Ident.text);
+	// DataType type = symbolTable.getType($id);
+	// Symbol arrayIndexTemp = symbolTable.addTemporary(type);
+	// Symbol typeSize = symbolTable.addUserVariable(String.valueOf(type.getNumBytes()).toString(), DataType.INT);
+	// quadTable.add(arrayIndexTemp, typeSize, $expr.id, "*");
+	// quadTable.add($id, $id, null, "[]=");
+	// $id = temp;
+}
 ;
 
 num
@@ -580,7 +607,7 @@ num
 literal returns [Symbol id]
 : num
 {
-	$id = symbolTable.addUserVariable($num.text, DataType.INT);
+	$id = symbolTable.addUserVariable($num.text, new DataType(ElemType.INT));
 }
 // | Char
 // | BoolLit
