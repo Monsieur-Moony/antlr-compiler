@@ -1,16 +1,7 @@
 class Program {
-    int a , b, c;
+    int a=10;
+    boolean b;
     int main() {
-        a = a + b + c;
-        a = b - -c;
-        a = a + b * c;
-    }
-    void foo() {
-        boolean c;
-        c += 10;
-    }
-    void bar() {
-        boolean d;
-        d += 111;
+        a -= 20 / 10 + 3;
     }
 }

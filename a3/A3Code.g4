@@ -303,7 +303,6 @@ field_decl returns [DataType t]
 {
 	$t = DataType.valueOf($Type.text.toUpperCase());
 	symbolTable.addUserVariable($Ident.text, $t);
-	
 }
 | Type Ident '[' num ']'
 {
@@ -311,10 +310,12 @@ field_decl returns [DataType t]
 }
 ;
 
-inited_field_decl returns [int id]
+inited_field_decl
 : Type Ident '=' literal
 {
-
+	DataType type = DataType.valueOf($Type.text.toUpperCase());
+	Symbol decl = symbolTable.addUserVariable($Ident.text, type);
+	quadTable.add(decl, $literal.id, null, "=");
 }
 ;
 
