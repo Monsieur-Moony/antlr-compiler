@@ -23,6 +23,7 @@ grammar A3Code;
 	public enum ElemType {
 		VOID(0),
 		INT(4),
+		CHAR(1),
 		BOOLEAN(1),
 		INVALID(0);
 
@@ -617,8 +618,15 @@ literal returns [Symbol id]
 {
 	$id = symbolTable.addIntConstant($num.text);
 }
-// | Char
-// | BoolLit
+| Char
+{
+	int charValue = (int) $Char.text.charAt(0);
+	$id = symbolTable.addUserVariable(String.valueOf(charValue), new DataType(ElemType.CHAR));
+}
+| BoolLit
+{
+	$id = symbolTable.addUserVariable($BoolLit.text, new DataType(ElemType.BOOLEAN));
+}
 ;
 
 //--------------------------------------------- END OF SESSION 2 -----------------------------------
