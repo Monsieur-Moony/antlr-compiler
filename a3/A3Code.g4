@@ -135,6 +135,10 @@ grammar A3Code;
 			return newSymbol;
 		}
 
+		public Symbol addIntConstant(String name) {
+			return addUserVariable(name, new DataType(ElemType.INT));
+		}
+
 		public Symbol addTemporary(DataType type) {
 			Symbol newSymbol = new Symbol(temporariesCounter, type);
 			symbols.add(newSymbol);
@@ -315,8 +319,8 @@ field_decl returns [DataType t]
 }
 | f=field_decl ',' Ident '[' num ']'
 {
-	// $t = $f.t;
-	// symbolTable.addUserVariable($Ident.text, $t);
+	$t = $f.t;
+	symbolTable.addUserVariable($Ident.text, $t);
 }
 | Type Ident
 {
@@ -341,13 +345,7 @@ inited_field_decl
 
 method_decls returns [int id]
 : m=method_decls method_decl
-{
-
-}
 |
-{
-	
-}
 ;
 
 method_decl
@@ -417,19 +415,28 @@ statements
 statement
 : location '=' expr ';'
 {
-	quadTable.add($location.id, $expr.id, null, "=");
+	if ($location.offset == null) { // non-array location
+		quadTable.add($location.id, $expr.id, null, "=");
+	} else {
+		quadTable.add($location.id, $location.offset, $expr.id, "[]=");
+	}
 }
-| location '+=' expr ';'
+| location AssignOp expr ';'
 {
-	Symbol temp = symbolTable.addTemporary(symbolTable.getType($location.id));
-	quadTable.add(temp, $location.id, $expr.id, "+");
-	quadTable.add($location.id, temp, null, "=");
-}
-| location '-=' expr ';'
-{
-	Symbol temp = symbolTable.addTemporary(symbolTable.getType($location.id));
-	quadTable.add(temp, $location.id, $expr.id, "-");
-	quadTable.add($location.id, temp, null, "=");
+	String op = $AssignOp.text.substring(0, 1); // E.g. op for "+=" is "+"
+	if ($location.offset == null) { // non-array location
+		Symbol temp = symbolTable.addTemporary(symbolTable.getType($location.id));
+		quadTable.add(temp, $location.id, $expr.id, op);
+		quadTable.add($location.id, temp, null, "=");
+	} else {
+		DataType type = new DataType(symbolTable.getType($location.id).getElem());
+		Symbol temp1 = symbolTable.addTemporary(type);
+		quadTable.add(temp1, $location.id, $location.offset, "=[]");
+
+		Symbol temp2 = symbolTable.addTemporary(type);
+		quadTable.add(temp2, temp1, $expr.id, op);
+		quadTable.add($location.id, $location.offset, temp2, "[]=");
+	}
 }
 | If '(' expr ')' block
 {
@@ -524,7 +531,9 @@ expr returns [Symbol id]
 }
 | location
 {
-	$id = $location.id;
+	DataType type = new DataType(symbolTable.getType($location.id).getElem());
+	$id = symbolTable.addTemporary(type);
+	quadTable.add($id, $location.id, $location.offset, "=[]");
 }
 | '(' e=expr ')'
 {
@@ -533,7 +542,7 @@ expr returns [Symbol id]
 | SubOp e=expr
 {
 	$id = symbolTable.addTemporary(symbolTable.getType($e.id));
-	Symbol zeroSymbol = symbolTable.addUserVariable("0", new DataType(ElemType.INT));
+	Symbol zeroSymbol = symbolTable.addIntConstant("0");
     quadTable.add($id, zeroSymbol, $e.id, $SubOp.text);
 }
 // | '!' e=expr
@@ -582,20 +591,19 @@ expr returns [Symbol id]
 //}
 ;
 
-location returns [Symbol id]
+location returns [Symbol id, Symbol offset]
 : Ident
 {
 	$id = symbolTable.lookup($Ident.text);
+	$offset = null;
 }
 | Ident '[' expr ']'
 {
 	$id = symbolTable.lookup($Ident.text);
-	// DataType type = symbolTable.getType($id);
-	// Symbol arrayIndexTemp = symbolTable.addTemporary(type);
-	// Symbol typeSize = symbolTable.addUserVariable(String.valueOf(type.getNumBytes()).toString(), DataType.INT);
-	// quadTable.add(arrayIndexTemp, typeSize, $expr.id, "*");
-	// quadTable.add($id, $id, null, "[]=");
-	// $id = temp;
+	DataType type = symbolTable.getType($id);
+	$offset = symbolTable.addTemporary(new DataType(type.getElem()));
+	Symbol typeWidth = symbolTable.addIntConstant(type.getElem().getWidth());
+	quadTable.add($offset, typeWidth, $expr.id, "*");
 }
 ;
 
@@ -607,7 +615,7 @@ num
 literal returns [Symbol id]
 : num
 {
-	$id = symbolTable.addUserVariable($num.text, new DataType(ElemType.INT));
+	$id = symbolTable.addIntConstant($num.text);
 }
 // | Char
 // | BoolLit
@@ -731,6 +739,11 @@ RelOp
 | '>'
 | '=='
 | '!='
+;
+
+AssignOp
+: '+='
+| '-='
 ;
 
 MulDiv
