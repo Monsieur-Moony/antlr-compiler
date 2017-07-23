@@ -10,6 +10,6 @@ class Program {
 
     }
     int main() {
-        fun (1, 2, fun(3));
+        callout("printf", "a = %d\n", fun());
     }
 }

@@ -104,7 +104,7 @@ grammar A3Code;
 
 		@Override
 		public String toString() {
-			return name + "\t" + type;
+			return name + "\t\t" + type;
 		}
 	}
 
@@ -242,7 +242,17 @@ grammar A3Code;
 				sb.append("L_");
 				sb.append(label);
 				sb.append(": ");
-				if (op.equals("ret")) {
+				if (op.equals("call")) {
+					if (dst != null) {
+						sb.append(symbolTable.getName(dst));
+						sb.append(" = ");
+					}
+					sb.append(op);
+					sb.append(" ");
+					sb.append(symbolTable.getName(src1));
+					sb.append(" ");
+					sb.append(symbolTable.getName(src2));
+				} else if (op.equals("ret")) {
 					sb.append(op);
 					if (src1 != null) {
 						sb.append(" ");
@@ -308,6 +318,10 @@ grammar A3Code;
 			}
 			return sb.toString();
 		}
+	}
+
+	public String stripQuotes(String quotedString) {
+		return quotedString.substring(1, (quotedString.length() - 1));
 	}
 
 	public QuadTable quadTable = new QuadTable();
@@ -446,7 +460,9 @@ statement
 }
 | location AssignOp expr ';'
 {
-	String op = $AssignOp.text.substring(0, 1); // E.g. op for "+=" is "+"
+	// Use fist character from the lexeme as operator
+	// E.g. op for "+=" is "+"
+	String op = $AssignOp.text.substring(0, 1);
 	if ($location.offset == null) { // non-array location
 		Symbol temp = symbolTable.addTemporary(symbolTable.getType($location.id));
 		quadTable.add(temp, $location.id, $expr.id, op);
@@ -492,20 +508,22 @@ statement
 | block
 | methodCall ';'
 {
-
+	Symbol count = symbolTable.addIntConstant(String.valueOf($methodCall.count));
+	quadTable.add(null, $methodCall.id, count, "call");
 }
 ;
 
-methodCall
+methodCall returns [Symbol id, int count]
 : Ident '(' args ')'
 {
-	Symbol function = symbolTable.lookup($Ident.text);
-	Symbol count = symbolTable.addIntConstant(String.valueOf($args.count));
-	quadTable.add(null, function, count, "call");
+	$id = symbolTable.lookup($Ident.text);
+	$count = $args.count;
 }
 | Callout '(' Str calloutArgs ')'
 {
-
+	DataType type = new DataType(ElemType.VOID);
+	$id = symbolTable.addUserVariable(stripQuotes($Str.text), type);
+	$count = 1 + $calloutArgs.count;
 }
 ;
 
@@ -533,18 +551,23 @@ someArgs returns [int count]
 }
 ;
 
-calloutArgs
+calloutArgs returns [int count]
 : c=calloutArgs ',' expr
 {
-
+	quadTable.add(null, $expr.id, null, "param");
+	$count = $c.count + 1;
 }
 | c=calloutArgs ',' Str
 {
-
+	String strLength = String.valueOf($Str.text.length() - 2); // quotes are not part of char array
+	DataType type = new DataType(ElemType.CHAR, strLength);
+	Symbol str = symbolTable.addUserVariable($Str.text, type);
+	quadTable.add(null, str, null, "param");
+	$count = $c.count + 1;
 }
 |
 {
-
+	$count = 0;
 }
 ;
 
@@ -611,12 +634,12 @@ expr returns [Symbol id]
 //	$id = symbolTable.addTemporary(symbolTable.getType($e1.id));
 //    quadTable.add($id, $e1.id, $e2.id, $OrOp.text);
 //}
-//| methodCall
-//{
-//	$id = PrintNode("Call_expr");
-//
-//	PrintEdge($id, $methodCall.id);
-//}
+| methodCall
+{
+	Symbol count = symbolTable.addIntConstant(String.valueOf($methodCall.count));
+	$id = symbolTable.addTemporary(symbolTable.getType($methodCall.id));
+	quadTable.add($id, $methodCall.id, count, "call");
+}
 ;
 
 location returns [Symbol id, Symbol offset]
