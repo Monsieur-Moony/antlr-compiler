@@ -15,8 +15,10 @@ grammar A3Code;
 //---------------------------------------------------------------------------------------------------
 @header {
 	import java.io.*;
-	import java.util.ArrayList;
 	import java.util.List;
+	import java.util.ArrayList;
+	import java.util.Set;
+	import java.util.HashSet;
 }
 
 @parser::members {
@@ -232,6 +234,36 @@ grammar A3Code;
 			this.op = op;
 		}
 
+		private boolean isControl() {
+			return op.equals("if") || op.equals("ifFalse") || op.equals("goto");
+		}
+
+		public boolean isUnpatched() {
+			return isControl() && dst == null;
+		}
+
+		public Symbol getDst() {
+			return dst;
+		}
+
+		public void setDst(Symbol dst) {
+			this.dst = dst;
+		}
+
+		@Override
+		public boolean equals(Object otherObj) {
+			if (otherObj == null || (this.getClass() != otherObj.getClass())) {
+				return false;
+			}
+			Quad otherQuad = (Quad) otherObj;
+			return this.label == otherQuad.label;
+		}
+
+		@Override
+		public int hashCode() {
+			return label;
+		}
+
 		@Override
 		public String toString() {
 			StringBuilder sb = new StringBuilder();
@@ -307,6 +339,24 @@ grammar A3Code;
 			Quad newQuad = new Quad(quads.size(), dst, src1, src2, op);
 			quads.add(newQuad);
 			return newQuad;
+		}
+
+		private void backpatch(Quad srcQuad, Quad dstQuad) {
+			if (srcQuad.isUnpatched()) {
+				srcQuad.setDst(dstQuad.getDst());
+			}
+		}
+
+		public void backpatch(Set<Quad> srcQuads, Quad dstQuad) {
+			for (Quad quad : srcQuads) {
+				backpatch(quad, dstQuad);
+			}
+		}
+
+		public void backpatchAll(Quad dstQuad) {
+			for (Quad quad : quads) {
+				backpatch(quad, dstQuad);
+			}
 		}
 
 		@Override
