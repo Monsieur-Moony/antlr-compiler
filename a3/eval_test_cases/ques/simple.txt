@@ -1,6 +1,6 @@
 class Program {
     int a, b, c;
-    int fun ( )
+    int fun ( int x, boolean y )
     {
         a = a + b + c;
         a = b - -c;

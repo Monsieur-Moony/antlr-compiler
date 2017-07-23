@@ -175,6 +175,16 @@ grammar A3Code;
 			return child;
 		}
 
+		public SymbolTable createChild(SymbolTable child) {
+			child.setParent(this);
+			this.children.add(child);
+			return child;
+		}
+
+		public void setParent(SymbolTable parent) {
+			this.parent = parent;
+		}
+
 		public SymbolTable getParent() {
 			return this.parent;
 		}
@@ -210,13 +220,19 @@ grammar A3Code;
 	}
 
 	public SymbolTable symbolTable = new SymbolTable();
+	public SymbolTable nextChild = null;
 
 	public void createScope() {
-		symbolTable = symbolTable.createChild();
+		if (nextChild != null) {
+			symbolTable = symbolTable.createChild(nextChild);
+		} else {
+			symbolTable = symbolTable.createChild();
+		}
 	}
 
 	public void exitScope() {
 		symbolTable = symbolTable.getParent();
+		nextChild = null;
 	}
 
 	public class Quad {
@@ -451,11 +467,12 @@ method_decl
 ;
 
 params
-: Type Ident nextParams
+: Type Ident
 {
+	nextChild = new SymbolTable();
 	DataType type = new DataType(ElemType.valueOf($Type.text.toUpperCase()));
-	symbolTable.addUserVariable($Ident.text, type);
-}
+	nextChild.addUserVariable($Ident.text, type);
+} nextParams
 |
 ;
 
@@ -463,7 +480,7 @@ nextParams
 : n=nextParams ',' Type Ident
 {
 	DataType type = new DataType(ElemType.valueOf($Type.text.toUpperCase()));
-	symbolTable.addUserVariable($Ident.text, type);
+	nextChild.addUserVariable($Ident.text, type);
 }
 |
 ;
