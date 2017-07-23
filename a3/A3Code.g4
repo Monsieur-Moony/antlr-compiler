@@ -403,23 +403,19 @@ method_decl
 params
 : Type Ident nextParams
 {
-
+	DataType type = new DataType(ElemType.valueOf($Type.text.toUpperCase()));
+	symbolTable.addUserVariable($Ident.text, type);
 }
 |
-{
-
-}
 ;
 
 nextParams
 : n=nextParams ',' Type Ident
 {
-
+	DataType type = new DataType(ElemType.valueOf($Type.text.toUpperCase()));
+	symbolTable.addUserVariable($Ident.text, type);
 }
 |
-{
-
-}
 ;
 
 block 
@@ -523,7 +519,7 @@ methodCall returns [Symbol id, int count]
 {
 	DataType type = new DataType(ElemType.VOID);
 	$id = symbolTable.addUserVariable(stripQuotes($Str.text), type);
-	$count = 1 + $calloutArgs.count;
+	$count = $calloutArgs.count;
 }
 ;
 
