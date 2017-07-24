@@ -26,7 +26,7 @@ grammar A3Code;
 		VOID(0),
 		INT(4),
 		CHAR(1),
-		BOOLEAN(1),
+		BOOLEAN(4),
 		INVALID(0);
 
 		private String width;
@@ -126,6 +126,20 @@ grammar A3Code;
 
 		public SymbolTable() {
 			this(null);
+		}
+
+		//TODO: DEBUG ONLY
+		public int getNumTables(int old) {
+			int count = old;
+			for (int i = 0; i < children.size(); i++) {
+				SymbolTable curr = children.get(i);
+				count += 1;
+				if (count > 500) {
+					break;
+				}
+				count += curr.getNumTables(count);
+			}
+			return count;
 		}
 
 		public Symbol addUserVariable(String name, DataType type) {
@@ -236,18 +250,20 @@ grammar A3Code;
 	}
 
 	public class Quad {
-		private int label;
+		private Integer label;
 		private String op;
 		private Symbol src1;
 		private Symbol src2;
 		private Symbol dst;
+		private Integer controlLabel;
 
 		Quad (int label, Symbol dst, Symbol src1, Symbol src2, String op) {
-			this.label = label;
+			this.label = new Integer(label);
 			this.dst = dst;
 			this.src1 = src1;
 			this.src2 = src2;
 			this.op = op;
+			this.controlLabel = null;
 		}
 
 		private boolean isControl() {
@@ -255,15 +271,15 @@ grammar A3Code;
 		}
 
 		public boolean isUnpatched() {
-			return isControl() && dst == null;
+			return isControl() && this.controlLabel == null;
 		}
 
-		public Symbol getDst() {
-			return dst;
+		public int getLabel() {
+			return label;
 		}
 
-		public void setDst(Symbol dst) {
-			this.dst = dst;
+		public void setControlLabel(int controlLabel) {
+			this.controlLabel = new Integer(controlLabel);
 		}
 
 		@Override
@@ -290,52 +306,74 @@ grammar A3Code;
 				sb.append("L_");
 				sb.append(label);
 				sb.append(": ");
-				if (op.equals("call")) {
-					if (dst != null) {
+				if (!op.isEmpty()) {
+					if (op.equals("if") || op.equals("ifFalse")) {
+						sb.append(op);
+						sb.append(" ");
+						sb.append(symbolTable.getName(src1));
+						sb.append(" goto ");
+						if (controlLabel != null) {
+							sb.append("L_");
+							sb.append(controlLabel);
+						} else {
+							sb.append("__");
+						}
+					} else if (op.equals("goto")) {
+						sb.append(op);
+						sb.append(" ");
+						if (controlLabel != null) {
+							sb.append("L_");
+							sb.append(controlLabel);
+						} else {
+							sb.append("__");
+						}
+					} else if (op.equals("call")) {
+						if (dst != null) {
+							sb.append(symbolTable.getName(dst));
+							sb.append(" = ");
+						}
+						sb.append(op);
+						sb.append(" ");
+						sb.append(symbolTable.getName(src1));
+						sb.append(" ");
+						sb.append(symbolTable.getName(src2));
+					} else if (op.equals("ret")) {
+						sb.append(op);
+						if (src1 != null) {
+							sb.append(" ");
+							sb.append(symbolTable.getName(src1));
+						}
+					} else if (op.equals("[]=")) { // array write
+						sb.append(symbolTable.getName(dst));
+						sb.append("[ ");
+						sb.append(symbolTable.getName(src1));
+						sb.append(" ]");
+						sb.append(" = ");
+						sb.append(symbolTable.getName(src2));
+					} else if (op.equals("=[]")) { // array read
 						sb.append(symbolTable.getName(dst));
 						sb.append(" = ");
-					}
-					sb.append(op);
-					sb.append(" ");
-					sb.append(symbolTable.getName(src1));
-					sb.append(" ");
-					sb.append(symbolTable.getName(src2));
-				} else if (op.equals("ret")) {
-					sb.append(op);
-					if (src1 != null) {
-						sb.append(" ");
 						sb.append(symbolTable.getName(src1));
-					}
-				} else if (op.equals("[]=")) { // array write
-					sb.append(symbolTable.getName(dst));
-					sb.append("[ ");
-					sb.append(symbolTable.getName(src1));
-					sb.append(" ]");
-					sb.append(" = ");
-					sb.append(symbolTable.getName(src2));
-				} else if (op.equals("=[]")) { // array read
-					sb.append(symbolTable.getName(dst));
-					sb.append(" = ");
-					sb.append(symbolTable.getName(src1));
-					sb.append("[ ");
-					sb.append(symbolTable.getName(src2));
-					sb.append(" ]");
-				} else {
-					sb.append(symbolTable.getName(dst));
-					if (op.equals("param")) { // eg. L_0: <symbol_name> param
-						sb.append(symbolTable.getName(src1));
-						sb.append(" ");
-						sb.append(op);
+						sb.append("[ ");
+						sb.append(symbolTable.getName(src2));
+						sb.append(" ]");
 					} else {
-						sb.append(" = ");
-						sb.append(symbolTable.getName(src1));
-						// Check to prevent trailing " = " for assignment quads
-						// eg. L_0: <var> = <value>
-						if (!op.equals("=")) {
+						sb.append(symbolTable.getName(dst));
+						if (op.equals("param")) { // eg. L_0: <symbol_name> param
+							sb.append(symbolTable.getName(src1));
 							sb.append(" ");
 							sb.append(op);
-							sb.append(" ");
-							sb.append(symbolTable.getName(src2));
+						} else {
+							sb.append(" = ");
+							sb.append(symbolTable.getName(src1));
+							// Check to prevent trailing " = " for assignment quads
+							// eg. L_0: <var> = <value>
+							if (!op.equals("=")) {
+								sb.append(" ");
+								sb.append(op);
+								sb.append(" ");
+								sb.append(symbolTable.getName(src2));
+							}
 						}
 					}
 				}
@@ -357,22 +395,26 @@ grammar A3Code;
 			return newQuad;
 		}
 
-		private void backpatch(Quad srcQuad, Quad dstQuad) {
+		private void copyControlLabels(Quad srcQuad, int label) {
 			if (srcQuad.isUnpatched()) {
-				srcQuad.setDst(dstQuad.getDst());
+				srcQuad.setControlLabel(label);
 			}
 		}
 
-		public void backpatch(Set<Quad> srcQuads, Quad dstQuad) {
+		public void backpatch(QuadSet srcQuads, int label) {
 			for (Quad quad : srcQuads) {
-				backpatch(quad, dstQuad);
+				copyControlLabels(quad, label);
 			}
 		}
 
-		public void backpatchAll(Quad dstQuad) {
+		public void backpatchAll(int label) {
 			for (Quad quad : quads) {
-				backpatch(quad, dstQuad);
+				copyControlLabels(quad, label);
 			}
+		}
+
+		public int getNextLabel() {
+			return quads.size();
 		}
 
 		@Override
@@ -383,6 +425,39 @@ grammar A3Code;
 				sb.append("\n");
 			}
 			return sb.toString();
+		}
+	}
+
+	public class QuadSet implements Iterable<Quad> {
+		private Set<Quad> quads;
+
+		public QuadSet() {
+			this.quads = new HashSet<>();
+		}
+
+		public Set<Quad> toSet() {
+			return quads;
+		}
+
+		public void add(Quad newQuad) {
+			if (newQuad != null) {
+				quads.add(newQuad);
+			} else {
+				System.out.println("GIVEN NULL ARG TO ADD"); //TODO: REMOVE
+			}
+		}
+
+		public void merge(QuadSet otherQuads) {
+			if (otherQuads != null) {
+				quads.addAll(otherQuads.toSet());
+			} else {
+				System.out.println("GIVEN NULL ARG TO MERGE"); //TODO: REMOVE
+			}
+		}
+
+		@Override
+		public Iterator<Quad> iterator() {
+			return quads.iterator();
 		}
 	}
 
@@ -399,7 +474,10 @@ grammar A3Code;
 prog
 : Class Program '{' field_decls method_decls '}'
 {
-	System.out.print(symbolTable);
+	System.out.println(symbolTable.getNumTables(1));
+	// Quad halt = quadTable.add(null, null, null, "");
+	// quadTable.backpatchAll(halt);
+	// System.out.print(symbolTable);
 	System.out.println("------------------------------------");
 	System.out.print(quadTable);
 }
@@ -458,12 +536,18 @@ method_decl
 	Symbol method = symbolTable.addUserVariable($Ident.text, type);
 	quadTable.add(method, null, null, "method");
 } '(' params ')' block
+{
+	quadTable.backpatch($block.nextlist, quadTable.getNextLabel());
+}
 | Void Ident
 {
 	DataType type = new DataType(ElemType.VOID);
 	Symbol method = symbolTable.addUserVariable($Ident.text, type);
 	quadTable.add(method, null, null, "method");
 } '(' params ')' block
+{
+	quadTable.backpatch($block.nextlist, quadTable.getNextLabel());
+}
 ;
 
 params
@@ -485,8 +569,12 @@ nextParams
 |
 ;
 
-block 
-: '{' { createScope(); } var_decls statements '}' { exitScope(); }
+block returns [QuadSet nextlist]
+: '{' { createScope(); } var_decls statements '}'
+{
+	$nextlist = $statements.nextlist;
+	exitScope();
+}
 ;
 
 var_decls 
@@ -507,14 +595,22 @@ var_decl returns [DataType t]
 }
 ;
 
-statements 
-: statement t=statements
+statements returns [QuadSet nextlist]
+: statement marker t=statements
+{
+	quadTable.backpatch($statement.nextlist, $marker.label);
+	$nextlist = $t.nextlist;
+}
 |
+{
+	$nextlist = new QuadSet();
+}
 ;
 
-statement
+statement returns [QuadSet nextlist]
 : location '=' expr ';'
 {
+	$nextlist = new QuadSet();
 	if ($location.offset == null) { // non-array location
 		quadTable.add($location.id, $expr.id, null, "=");
 	} else {
@@ -525,6 +621,7 @@ statement
 {
 	// Use fist character from the lexeme as operator
 	// E.g. op for "+=" is "+"
+	$nextlist = new QuadSet();
 	String op = $AssignOp.text.substring(0, 1);
 	if ($location.offset == null) { // non-array location
 		Symbol temp = symbolTable.addTemporary(symbolTable.getType($location.id));
@@ -540,25 +637,33 @@ statement
 		quadTable.add($location.id, $location.offset, temp2, "[]=");
 	}
 }
-| If '(' expr ')' block
+| If '(' expr ')' marker block
 {
-
+	quadTable.backpatch($expr.truelist, $marker.label);
+	$nextlist = $expr.falselist;
+	$nextlist.merge($block.nextlist);
 }
-| If '(' expr ')' b1=block Else b2=block
+| If '(' expr ')' m1=marker b1=block blockend Else m2=marker b2=block
 {
-
+	quadTable.backpatch($expr.truelist, $m1.label);
+	quadTable.backpatch($expr.falselist, $m2.label);
+	$nextlist = $b1.nextlist;
+	$nextlist.merge($blockend.nextlist);
+	$nextlist.merge($b2.nextlist);
 }
-| For Ident '=' e1=expr ',' e2=expr block
+| For Ident '=' e1=expr ',' e2=expr m1=marker block m2=marker
 {
 
 }
 | Ret ';'
 {
-    quadTable.add(null, null, null, "ret");
+	$nextlist = new QuadSet();
+	quadTable.add(null, null, null, "ret");
 }
 | Ret '(' expr ')' ';'
 {
-    quadTable.add(null, $expr.id, null, "ret");
+	$nextlist = new QuadSet();
+	quadTable.add(null, $expr.id, null, "ret");
 }
 | Brk ';'
 {
@@ -569,8 +674,12 @@ statement
 
 }
 | block
+{
+	$nextlist = $block.nextlist;
+}
 | methodCall ';'
 {
+	$nextlist = new QuadSet();
 	Symbol count = symbolTable.addIntConstant(String.valueOf($methodCall.count));
 	quadTable.add(null, $methodCall.id, count, "call");
 }
@@ -634,13 +743,22 @@ calloutArgs returns [int count]
 }
 ;
 
-expr returns [Symbol id]
+expr returns [Symbol id, QuadSet truelist, QuadSet falselist]
 : literal
 {
 	$id = $literal.id;
+	if ($literal.text.equals("true")) {
+		$truelist = new QuadSet();
+		$truelist.add(quadTable.add(null, null, null, "goto"));
+	} else if ($literal.text.equals("false")) {
+		$falselist = new QuadSet();
+		$falselist.add(quadTable.add(null, null, null, "goto"));
+	}
 }
 | location
 {
+	$truelist = new QuadSet();
+	$falselist = new QuadSet();
 	if ($location.offset == null) { // non-array location
 		$id = $location.id;
 	} else {
@@ -652,53 +770,85 @@ expr returns [Symbol id]
 | '(' e=expr ')'
 {
 	$id = $e.id;
+	$truelist = $e.truelist;
+	$falselist = $e.falselist;
 }
 | SubOp e=expr
 {
+	$truelist = new QuadSet();
+	$falselist = new QuadSet();
 	$id = symbolTable.addTemporary(symbolTable.getType($e.id));
 	Symbol zeroSymbol = symbolTable.addIntConstant("0");
-    quadTable.add($id, zeroSymbol, $e.id, $SubOp.text);
+	quadTable.add($id, zeroSymbol, $e.id, $SubOp.text);
 }
-// | '!' e=expr
-// {
-// 	$id = symbolTable.addTemporary(symbolTable.getType($e1.id));
-//     quadTable.add($id, $e1.id, $e2.id, $MulDiv.text);
-
-// 	$id = PrintNode("Not_expr");
-// 	PrintEdge($id, $e.id);
-// }
+| '!' e=expr
+{
+	$truelist = $e.falselist;
+	$falselist = $e.truelist;
+}
 | e1=expr MulDiv e2=expr
 {
+	$truelist = new QuadSet();
+	$falselist = new QuadSet();
 	$id = symbolTable.addTemporary(symbolTable.getType($e1.id));
-    quadTable.add($id, $e1.id, $e2.id, $MulDiv.text);
+	quadTable.add($id, $e1.id, $e2.id, $MulDiv.text);
 }
 | e1=expr AddOp e2=expr
 {
+	$truelist = new QuadSet();
+	$falselist = new QuadSet();
 	$id = symbolTable.addTemporary(symbolTable.getType($e1.id));
-    quadTable.add($id, $e1.id, $e2.id, $AddOp.text);
+	quadTable.add($id, $e1.id, $e2.id, $AddOp.text);
 }
 | e1=expr SubOp e2=expr
 {
+	$truelist = new QuadSet();
+	$falselist = new QuadSet();
 	$id = symbolTable.addTemporary(symbolTable.getType($e1.id));
-    quadTable.add($id, $e1.id, $e2.id, $SubOp.text);
+	quadTable.add($id, $e1.id, $e2.id, $SubOp.text);
 }
 | e1=expr RelOp e2=expr
 {
 	$id = symbolTable.addTemporary(symbolTable.getType($e1.id));
-    quadTable.add($id, $e1.id, $e2.id, $RelOp.text);
+	quadTable.add($id, $e1.id, $e2.id, $RelOp.text);
+
+	Quad trueInst = quadTable.add(null, $id, null, "if");
+	$truelist = new QuadSet();
+	$truelist.add(trueInst);
+	Quad falseInst = quadTable.add(null, $id, null, "ifFalse");
+	$falselist = new QuadSet();
+	$falselist.add(falseInst);
 }
-//| e1=expr AndOp e2=expr
-//{
-//	$id = symbolTable.addTemporary(symbolTable.getType($e1.id));
-//    quadTable.add($id, $e1.id, $e2.id, $AndOp.text);
-//}
-//| e1=expr OrOp e2=expr
-//{
-//	$id = symbolTable.addTemporary(symbolTable.getType($e1.id));
-//    quadTable.add($id, $e1.id, $e2.id, $OrOp.text);
-//}
+| e1=expr AndOp marker e2=expr
+{
+	if ($e1.truelist != null) {
+		quadTable.backpatch($e1.truelist, $marker.label);
+	}
+	if ($e1.falselist != null && $e2.falselist != null) {
+		$falselist = $e1.falselist;
+		$falselist.merge($e2.falselist);
+	} else {
+		$falselist = new QuadSet();
+	}
+	$truelist = $e2.truelist;
+}
+| e1=expr OrOp marker e2=expr
+{
+	if ($e1.falselist != null) {
+		quadTable.backpatch($e1.falselist, $marker.label);
+	}
+	if ($e1.truelist != null && $e2.truelist != null) {
+		$truelist = $e1.truelist;
+		$truelist.merge($e2.truelist);
+	} else {
+		$truelist = new QuadSet();
+	}
+	$falselist = $e2.falselist;
+}
 | methodCall
 {
+	$truelist = new QuadSet();
+	$falselist = new QuadSet();
 	Symbol count = symbolTable.addIntConstant(String.valueOf($methodCall.count));
 	$id = symbolTable.addTemporary(symbolTable.getType($methodCall.id));
 	quadTable.add($id, $methodCall.id, count, "call");
@@ -718,6 +868,22 @@ location returns [Symbol id, Symbol offset]
 	$offset = symbolTable.addTemporary(new DataType(type.getElem()));
 	Symbol typeWidth = symbolTable.addIntConstant(type.getElem().getWidth());
 	quadTable.add($offset, typeWidth, $expr.id, "*");
+}
+;
+
+blockend returns [QuadSet nextlist]
+:
+{
+	$nextlist = new QuadSet();
+	Quad nextQuad = quadTable.add(null, null, null, "goto");
+	$nextlist.add(nextQuad);
+}
+;
+
+marker returns [int label]
+:
+{
+	$label = quadTable.getNextLabel();
 }
 ;
 

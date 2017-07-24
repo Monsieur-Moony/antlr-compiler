@@ -1,15 +1,9 @@
 class Program {
     int a, b, c;
-    int fun ( int x, boolean y )
-    {
-        a = a + b + c;
-        a = b - -c;
-        a = a + b * c;
-        
-        return (a); 
 
-    }
+
     int main(int foo, boolean bar) {
-        callout("printf", "a = %d\n", fun());
+        foo += 100;
+        if (bar) {}
     }
 }
