@@ -239,6 +239,7 @@ grammar A3Code;
 	public void createScope() {
 		if (nextChild != null) {
 			symbolTable = symbolTable.createChild(nextChild);
+			nextChild = null;
 		} else {
 			symbolTable = symbolTable.createChild();
 		}
@@ -246,7 +247,6 @@ grammar A3Code;
 
 	public void exitScope() {
 		symbolTable = symbolTable.getParent();
-		nextChild = null;
 	}
 
 	public class Quad {
@@ -474,10 +474,10 @@ grammar A3Code;
 prog
 : Class Program '{' field_decls method_decls '}'
 {
-	System.out.println(symbolTable.getNumTables(1));
+	// System.out.println(symbolTable.getNumTables(1));
 	// Quad halt = quadTable.add(null, null, null, "");
 	// quadTable.backpatchAll(halt.getLabel());
-	// System.out.print(symbolTable);
+	System.out.print(symbolTable);
 	System.out.println("------------------------------------");
 	System.out.print(quadTable);
 }

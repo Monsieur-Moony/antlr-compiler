@@ -1,9 +1,19 @@
 class Program {
     int a, b, c;
+    int fun ( int x, boolean y )
+    {
+        if (a < b) {
+            a -= 100 * 20 - 19 / 200;
+        }
+        if (b < c && b < a) {
+            b[2] = 19;
+    }
 
+
+        return (a);
+    }
 
     int main(int foo, boolean bar) {
-        foo += 100;
-        if (bar) {}
+
     }
 }
