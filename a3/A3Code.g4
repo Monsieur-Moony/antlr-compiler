@@ -476,7 +476,7 @@ prog
 {
 	System.out.println(symbolTable.getNumTables(1));
 	// Quad halt = quadTable.add(null, null, null, "");
-	// quadTable.backpatchAll(halt);
+	// quadTable.backpatchAll(halt.getLabel());
 	// System.out.print(symbolTable);
 	System.out.println("------------------------------------");
 	System.out.print(quadTable);
@@ -536,18 +536,12 @@ method_decl
 	Symbol method = symbolTable.addUserVariable($Ident.text, type);
 	quadTable.add(method, null, null, "method");
 } '(' params ')' block
-{
-	quadTable.backpatch($block.nextlist, quadTable.getNextLabel());
-}
 | Void Ident
 {
 	DataType type = new DataType(ElemType.VOID);
 	Symbol method = symbolTable.addUserVariable($Ident.text, type);
 	quadTable.add(method, null, null, "method");
 } '(' params ')' block
-{
-	quadTable.backpatch($block.nextlist, quadTable.getNextLabel());
-}
 ;
 
 params
@@ -619,7 +613,7 @@ statement returns [QuadSet nextlist]
 }
 | location AssignOp expr ';'
 {
-	// Use fist character from the lexeme as operator
+	// Use first character from the lexeme as operator
 	// E.g. op for "+=" is "+"
 	$nextlist = new QuadSet();
 	String op = $AssignOp.text.substring(0, 1);
@@ -643,14 +637,14 @@ statement returns [QuadSet nextlist]
 	$nextlist = $expr.falselist;
 	$nextlist.merge($block.nextlist);
 }
-| If '(' expr ')' m1=marker b1=block blockend Else m2=marker b2=block
-{
-	quadTable.backpatch($expr.truelist, $m1.label);
-	quadTable.backpatch($expr.falselist, $m2.label);
-	$nextlist = $b1.nextlist;
-	$nextlist.merge($blockend.nextlist);
-	$nextlist.merge($b2.nextlist);
-}
+//| If '(' expr ')' m1=marker b1=block blockend Else m2=marker b2=block
+//{
+//	quadTable.backpatch($expr.truelist, $m1.label);
+//	quadTable.backpatch($expr.falselist, $m2.label);
+//	$nextlist = $b1.nextlist;
+//	$nextlist.merge($blockend.nextlist);
+//	$nextlist.merge($b2.nextlist);
+//}
 | For Ident '=' e1=expr ',' e2=expr m1=marker block m2=marker
 {
 
