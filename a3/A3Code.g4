@@ -150,11 +150,15 @@ grammar A3Code;
 		}
 
 		private Symbol searchList(String name) {
-			for (int i = 0; i < symbols.size(); i++) {
-				Symbol currentSymbol = symbols.get(i);
-				if (currentSymbol.getName().equals(name)) {
-					return currentSymbol;
+			if (name != null) {
+				for (int i = 0; i < symbols.size(); i++) {
+					Symbol currentSymbol = symbols.get(i);
+					if (currentSymbol.getName().equals(name)) {
+						return currentSymbol;
+					}
 				}
+			} else {
+				System.out.println("GIVEN NULL ARG TO SEARCHLIST"); //TODO: REMOVE
 			}
 			return null;
 		}
@@ -176,8 +180,10 @@ grammar A3Code;
 		}
 
 		public SymbolTable createChild(SymbolTable child) {
-			child.setParent(this);
-			this.children.add(child);
+			if (child != null) {
+				child.setParent(this);
+				this.children.add(child);
+			}
 			return child;
 		}
 
@@ -388,8 +394,12 @@ grammar A3Code;
 		}
 
 		public void backpatch(QuadSet srcQuads, int label) {
-			for (Quad quad : srcQuads) {
-				copyControlLabels(quad, label);
+			if (srcQuads != null) {
+				for (Quad quad : srcQuads) {
+					copyControlLabels(quad, label);
+				}
+			} else {
+				System.out.println("GIVEN NULL ARG TO BACKPATCH"); //TODO: REMOVE
 			}
 		}
 
