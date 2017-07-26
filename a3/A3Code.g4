@@ -460,9 +460,8 @@ grammar A3Code;
 prog
 : Class Program '{' field_decls method_decls '}'
 {
-	// System.out.println(symbolTable.getNumTables(1));
-	// Quad halt = quadTable.add(null, null, null, "");
-	// quadTable.backpatchAll(halt.getLabel());
+	Quad halt = quadTable.add(null, null, null, "");
+	quadTable.backpatchAll(halt.getLabel());
 	System.out.print(symbolTable);
 	System.out.println("------------------------------------");
 	System.out.print(quadTable);
@@ -636,11 +635,26 @@ statement returns [QuadSet nextlist]
 	nextChild = new SymbolTable();
 	Symbol loopVar = nextChild.addIntConstant($Ident.text);
 	quadTable.add(loopVar, $expr.id, null, "=");
-} ',' m1=marker e2=expr m2=marker block blockend
+} ',' m1=marker e2=expr
 {
-	quadTable.backpatch($blockend.nextlist, $m1.label);
+	Symbol temp = symbolTable.addTemporary(symbolTable.getType($e1.id));
+	quadTable.add(temp, loopVar, $e2.id, "<");
+
+	Quad trueInst = quadTable.add(null, temp, null, "if");
+	Quad falseInst = quadTable.add(null, temp, null, "ifFalse");
+	$nextlist = new QuadSet();
+	$nextlist.add(falseInst);
+
+} m2=marker block
+{
 	quadTable.backpatch($e2.truelist, $m2.label);
-	$nextlist = $e2.falselist;
+	trueInst.setControlLabel($m2.label);
+
+	Symbol one = symbolTable.addIntConstant("1");
+	quadTable.add(loopVar, loopVar, one, "+");
+
+	Quad forBlockEnd = quadTable.add(null, null, null, "goto");
+	forBlockEnd.setControlLabel($m1.label);
 }
 | Ret ';'
 {
@@ -654,11 +668,15 @@ statement returns [QuadSet nextlist]
 }
 | Brk ';'
 {
-
+	Quad breakControl = quadTable.add(null, null, null, "goto");
+	$nextlist = new QuadSet();
+	// TODO: point to loop's false action
 }
 | Cnt ';'
 {
-
+	Quad breakControl = quadTable.add(null, null, null, "goto");
+	$nextlist = new QuadSet();
+	// TODO: point to loop's true action
 }
 | block
 {
