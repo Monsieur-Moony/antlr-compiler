@@ -752,11 +752,11 @@ expr returns [Symbol id, QuadSet truelist, QuadSet falselist]
 : literal
 {
 	$id = $literal.id;
+	$truelist = new QuadSet();
+	$falselist = new QuadSet();
 	if ($literal.text.equals("true")) {
-		$truelist = new QuadSet();
 		$truelist.add(quadTable.add(null, null, null, "goto"));
 	} else if ($literal.text.equals("false")) {
-		$falselist = new QuadSet();
 		$falselist.add(quadTable.add(null, null, null, "goto"));
 	}
 }
