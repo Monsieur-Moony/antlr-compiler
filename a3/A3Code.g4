@@ -128,20 +128,6 @@ grammar A3Code;
 			this(null);
 		}
 
-		//TODO: DEBUG ONLY
-		public int getNumTables(int old) {
-			int count = old;
-			for (int i = 0; i < children.size(); i++) {
-				SymbolTable curr = children.get(i);
-				count += 1;
-				if (count > 500) {
-					break;
-				}
-				count += curr.getNumTables(count);
-			}
-			return count;
-		}
-
 		public Symbol addUserVariable(String name, DataType type) {
 			Symbol foundSymbol = searchList(name);
 			if (foundSymbol != null) {
@@ -637,17 +623,24 @@ statement returns [QuadSet nextlist]
 	$nextlist = $expr.falselist;
 	$nextlist.merge($block.nextlist);
 }
-//| If '(' expr ')' m1=marker b1=block blockend Else m2=marker b2=block
-//{
-//	quadTable.backpatch($expr.truelist, $m1.label);
-//	quadTable.backpatch($expr.falselist, $m2.label);
-//	$nextlist = $b1.nextlist;
-//	$nextlist.merge($blockend.nextlist);
-//	$nextlist.merge($b2.nextlist);
-//}
-| For Ident '=' e1=expr ',' e2=expr m1=marker block m2=marker
+| If '(' expr ')' m1=marker b1=block blockend Else m2=marker b2=block
 {
-
+	quadTable.backpatch($expr.truelist, $m1.label);
+	quadTable.backpatch($expr.falselist, $m2.label);
+	$nextlist = $b1.nextlist;
+	$nextlist.merge($blockend.nextlist);
+	$nextlist.merge($b2.nextlist);
+}
+| For Ident '=' e1=expr
+{
+	nextChild = new SymbolTable();
+	Symbol loopVar = nextChild.addIntConstant($Ident.text);
+	quadTable.add(loopVar, $expr.id, null, "=");
+} ',' m1=marker e2=expr m2=marker block blockend
+{
+	quadTable.backpatch($blockend.nextlist, $m1.label);
+	quadTable.backpatch($e2.truelist, $m2.label);
+	$nextlist = $e2.falselist;
 }
 | Ret ';'
 {
