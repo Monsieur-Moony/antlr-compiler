@@ -219,18 +219,6 @@ grammar A3Code;
 			return child;
 		}
 
-		public SymbolTable createChild(SymbolTable child) {
-			if (child != null) {
-				child.setParent(this);
-				this.children.add(child);
-			}
-			return child;
-		}
-
-		public void setParent(SymbolTable parent) {
-			this.parent = parent;
-		}
-
 		public SymbolTable getParent() {
 			return this.parent;
 		}
@@ -266,15 +254,9 @@ grammar A3Code;
 	}
 
 	public SymbolTable symbolTable = new SymbolTable();
-	public SymbolTable nextChild = null;
 
 	public void createScope() {
-		if (nextChild != null) {
-			symbolTable = symbolTable.createChild(nextChild);
-			nextChild = null;
-		} else {
-			symbolTable = symbolTable.createChild();
-		}
+		symbolTable = symbolTable.createChild();
 	}
 
 	public void exitScope() {
@@ -565,7 +547,7 @@ inited_field_decl
 ;
 
 method_decls returns [int id]
-: m=method_decls method_decl
+: m=method_decls { createScope(); } method_decl { exitScope(); }
 |
 ;
 
@@ -587,9 +569,8 @@ method_decl
 params
 : Type Ident
 {
-	nextChild = new SymbolTable();
 	DataType type = new DataType(ElemType.valueOf($Type.text.toUpperCase()));
-	nextChild.addUserVariable($Ident.text, type);
+	symbolTable.addUserVariable($Ident.text, type);
 } nextParams
 |
 ;
@@ -598,16 +579,15 @@ nextParams
 : n=nextParams ',' Type Ident
 {
 	DataType type = new DataType(ElemType.valueOf($Type.text.toUpperCase()));
-	nextChild.addUserVariable($Ident.text, type);
+	symbolTable.addUserVariable($Ident.text, type);
 }
 |
 ;
 
 block returns [QuadSet nextlist]
-: '{' { createScope(); } var_decls statements '}'
+: '{' var_decls statements '}'
 {
 	$nextlist = $statements.nextlist;
-	exitScope();
 }
 ;
 
@@ -671,24 +651,25 @@ statement returns [QuadSet nextlist]
 		quadTable.add($location.id, $location.offset, temp2, "[]=");
 	}
 }
-| If '(' expr ')' marker block
+| If '(' { createScope(); } expr ')' marker block
 {
 	quadTable.backpatch($expr.truelist, $marker.label);
 	$nextlist = $expr.falselist;
 	$nextlist.merge($block.nextlist);
+	exitScope();
 }
-| If '(' expr ')' m1=marker b1=block blockend Else m2=marker b2=block
+| If '(' { createScope(); } expr ')' m1=marker { createScope(); } b1=block { exitScope(); } blockend Else m2=marker { createScope(); } b2=block { exitScope(); }
 {
 	quadTable.backpatch($expr.truelist, $m1.label);
 	quadTable.backpatch($expr.falselist, $m2.label);
 	$nextlist = $b1.nextlist;
 	$nextlist.merge($blockend.nextlist);
 	$nextlist.merge($b2.nextlist);
+	exitScope();
 }
-| For Ident '=' e1=expr
+| For Ident '=' { createScope(); } e1=expr
 {
-	nextChild = new SymbolTable();
-	Symbol loopVar = nextChild.addIntConstant($Ident.text);
+	Symbol loopVar = symbolTable.lookupSymbol($Ident.text);
 	quadTable.add(loopVar, $expr.id, null, "=");
 } ',' m1=marker e2=expr
 {
@@ -719,6 +700,7 @@ statement returns [QuadSet nextlist]
 
 	Quad forBlockEnd = quadTable.add(null, null, null, "goto");
 	forBlockEnd.setControlLabel($m1.label);
+	exitScope();
 }
 | Ret ';'
 {
@@ -749,11 +731,11 @@ statement returns [QuadSet nextlist]
 		continueList.add(continueControl);
 	}
 }
-| block
+| { createScope(); } block { exitScope(); }
 {
 	$nextlist = $block.nextlist;
 }
-| methodCall ';'
+| { createScope(); } methodCall { exitScope(); } ';'
 {
 	$nextlist = new QuadSet();
 	Symbol count = symbolTable.addIntConstant(String.valueOf($methodCall.count));

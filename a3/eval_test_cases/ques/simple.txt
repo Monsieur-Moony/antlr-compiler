@@ -2,6 +2,7 @@ class Program {
     int a, b, c;
     int fun ( int x, boolean y )
     {
+        int a;
         if (a < b) {
             a -= 100 * 20 - 19 / 200;
         }
@@ -14,7 +15,7 @@ class Program {
     }
 
     int main(int foo, boolean bar) {
-        for i = 100, 200 {
+        for y = 100, 200 {
             if (i / 2 == 0) {
                 break;
             } else {
