@@ -117,15 +117,55 @@ grammar A3Code;
 		private SymbolTable parent;
 		private List<SymbolTable> children;
 		private List<Symbol> symbols;
+		private QuadSet continueList;
+		private QuadSet breakList;
 
 		public SymbolTable(SymbolTable parent) {
 			this.parent = parent;
 			this.children = new ArrayList<>();
 			this.symbols = new ArrayList<>(INITIAL_CAPACITY);
+			this.continueList = null;
+			this.breakList = null;
 		}
 
 		public SymbolTable() {
 			this(null);
+		}
+
+		public void setContinueList(QuadSet continueList) {
+			this.continueList = continueList;
+		}
+
+		public void setBreakList(QuadSet breakList) {
+			this.breakList = breakList;
+		}
+
+		public QuadSet getContinueList() {
+			return continueList;
+		}
+
+		public QuadSet getBreakList() {
+			return breakList;
+		}
+
+		public QuadSet lookupContinueList() {
+			for (SymbolTable s = this; s != null; s = s.getParent()) {
+				QuadSet foundContinueList = s.getContinueList();
+				if (foundContinueList != null) {
+					return foundContinueList;
+				}
+			}
+			return null;
+		}
+
+		public QuadSet lookupBreakList() {
+			for (SymbolTable s = this; s != null; s = s.getParent()) {
+				QuadSet foundBreakList = s.getBreakList();
+				if (foundBreakList != null) {
+					return foundBreakList;
+				}
+			}
+			return null;
 		}
 
 		public Symbol addUserVariable(String name, DataType type) {
@@ -163,7 +203,7 @@ grammar A3Code;
 			return null;
 		}
 
-		public Symbol lookup(String name) {
+		public Symbol lookupSymbol(String name) {
 			for (SymbolTable s = this; s != null; s = s.getParent()) {
 				Symbol foundSymbol = s.searchList(name);
 				if (foundSymbol != null) {
@@ -272,6 +312,10 @@ grammar A3Code;
 
 		public void setControlLabel(int controlLabel) {
 			this.controlLabel = new Integer(controlLabel);
+		}
+
+		public int getControlLabel() {
+			return controlLabel;
 		}
 
 		@Override
@@ -470,8 +514,9 @@ grammar A3Code;
 prog
 : Class Program '{' field_decls method_decls '}'
 {
-	Quad halt = quadTable.add(null, null, null, "");
-	quadTable.backpatchAll(halt.getLabel());
+	// TODO: UNCOMMENT THIS
+	// Quad halt = quadTable.add(null, null, null, "");
+	// quadTable.backpatchAll(halt.getLabel());
 	System.out.print(symbolTable);
 	System.out.println("------------------------------------");
 	System.out.print(quadTable);
@@ -651,17 +696,26 @@ statement returns [QuadSet nextlist]
 	quadTable.add(temp, loopVar, $e2.id, "<");
 
 	Quad trueInst = quadTable.add(null, temp, null, "if");
+	symbolTable.setContinueList(new QuadSet());
+
 	Quad falseInst = quadTable.add(null, temp, null, "ifFalse");
 	$nextlist = new QuadSet();
 	$nextlist.add(falseInst);
+	symbolTable.setBreakList($nextlist);
 
-} m2=marker block
+} m2=marker
 {
 	quadTable.backpatch($e2.truelist, $m2.label);
 	trueInst.setControlLabel($m2.label);
-
+} block
+{
 	Symbol one = symbolTable.addIntConstant("1");
-	quadTable.add(loopVar, loopVar, one, "+");
+	Quad increment = quadTable.add(loopVar, loopVar, one, "+");
+
+	QuadSet continueList = symbolTable.lookupContinueList();
+	if (continueList != null) {
+		quadTable.backpatch(continueList, increment.getLabel());
+	}
 
 	Quad forBlockEnd = quadTable.add(null, null, null, "goto");
 	forBlockEnd.setControlLabel($m1.label);
@@ -680,13 +734,20 @@ statement returns [QuadSet nextlist]
 {
 	Quad breakControl = quadTable.add(null, null, null, "goto");
 	$nextlist = new QuadSet();
-	// TODO: point to loop's false action
+	QuadSet breakList = symbolTable.lookupBreakList();
+	if (breakList != null) {
+		breakList.add(breakControl);
+	}
+
 }
 | Cnt ';'
 {
-	Quad breakControl = quadTable.add(null, null, null, "goto");
+	Quad continueControl = quadTable.add(null, null, null, "goto");
 	$nextlist = new QuadSet();
-	// TODO: point to loop's true action
+	QuadSet continueList = symbolTable.lookupContinueList();
+	if (continueList != null) {
+		continueList.add(continueControl);
+	}
 }
 | block
 {
@@ -703,7 +764,7 @@ statement returns [QuadSet nextlist]
 methodCall returns [Symbol id, int count]
 : Ident '(' args ')'
 {
-	$id = symbolTable.lookup($Ident.text);
+	$id = symbolTable.lookupSymbol($Ident.text);
 	$count = $args.count;
 }
 | Callout '(' Str calloutArgs ')'
@@ -873,12 +934,12 @@ expr returns [Symbol id, QuadSet truelist, QuadSet falselist]
 location returns [Symbol id, Symbol offset]
 : Ident
 {
-	$id = symbolTable.lookup($Ident.text);
+	$id = symbolTable.lookupSymbol($Ident.text);
 	$offset = null;
 }
 | Ident '[' expr ']'
 {
-	$id = symbolTable.lookup($Ident.text);
+	$id = symbolTable.lookupSymbol($Ident.text);
 	DataType type = symbolTable.getType($id);
 	$offset = symbolTable.addTemporary(new DataType(type.getElem()));
 	Symbol typeWidth = symbolTable.addIntConstant(type.getElem().getWidth());
