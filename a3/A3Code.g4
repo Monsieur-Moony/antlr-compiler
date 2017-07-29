@@ -19,6 +19,8 @@ grammar A3Code;
 	import java.util.ArrayList;
 	import java.util.Set;
 	import java.util.HashSet;
+	import java.util.Map;
+	import java.util.HashMap;
 }
 
 @parser::members {
@@ -116,14 +118,14 @@ grammar A3Code;
 	public class SymbolTable {
 		private SymbolTable parent;
 		private List<SymbolTable> children;
-		private List<Symbol> symbols;
+		private Map<String, Symbol> nameToSymbolMap;
 		private QuadSet continueList;
 		private QuadSet breakList;
 
 		public SymbolTable(SymbolTable parent) {
 			this.parent = parent;
 			this.children = new ArrayList<>();
-			this.symbols = new ArrayList<>(INITIAL_CAPACITY);
+			this.nameToSymbolMap = new HashMap<>(INITIAL_CAPACITY);
 			this.continueList = null;
 			this.breakList = null;
 		}
@@ -174,7 +176,7 @@ grammar A3Code;
 				return foundSymbol;
 			}
 			Symbol newSymbol = new Symbol(name, type);
-			symbols.add(newSymbol);
+			nameToSymbolMap.put(name, newSymbol);
 			return newSymbol;
 		}
 
@@ -184,19 +186,14 @@ grammar A3Code;
 
 		public Symbol addTemporary(DataType type) {
 			Symbol newSymbol = new Symbol(temporariesCounter, type);
-			symbols.add(newSymbol);
+			nameToSymbolMap.put(newSymbol.getName(), newSymbol);
 			temporariesCounter++;
 			return newSymbol;
 		}
 
 		private Symbol searchList(String name) {
 			if (name != null) {
-				for (int i = 0; i < symbols.size(); i++) {
-					Symbol currentSymbol = symbols.get(i);
-					if (currentSymbol.getName().equals(name)) {
-						return currentSymbol;
-					}
-				}
+				return nameToSymbolMap.get(name);
 			} else {
 				System.out.println("GIVEN NULL ARG TO SEARCHLIST"); //TODO: REMOVE
 			}
@@ -240,7 +237,7 @@ grammar A3Code;
 		@Override
 		public String toString() {
 			StringBuilder sb = new StringBuilder();
-			for (Symbol symbol : symbols) {
+			for (Symbol symbol : nameToSymbolMap.values()) {
 				sb.append(symbol);
 				sb.append("\n");
 			}
@@ -401,10 +398,10 @@ grammar A3Code;
 	}
 
 	public class QuadTable {
-		private List<Quad> quads;
+		private Set<Quad> quads;
 
 		QuadTable () {
-			quads = new ArrayList<>(INITIAL_CAPACITY);
+			quads = new HashSet<>(INITIAL_CAPACITY);
 		}
 
 		public Quad add(Symbol dst, Symbol src1, Symbol src2, String op) {
@@ -499,8 +496,8 @@ prog
 	// TODO: UNCOMMENT THIS
 	// Quad halt = quadTable.add(null, null, null, "");
 	// quadTable.backpatchAll(halt.getLabel());
-	System.out.print(symbolTable);
-	System.out.println("------------------------------------");
+	System.out.print(symbolTable); // TODO: COMMENT THIS
+	System.out.println("------------------------------------"); // TODO: COMMENT THIS
 	System.out.print(quadTable);
 }
 ;

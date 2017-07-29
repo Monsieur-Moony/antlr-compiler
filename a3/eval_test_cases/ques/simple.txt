@@ -14,8 +14,8 @@ class Program {
         return (a);
     }
 
-    int main(int foo, boolean bar) {
-        for y = 100, 200 {
+    int main(int foo, boolean bar, int i) {
+        for i = 100, 200 {
             if (i / 2 == 0) {
                 break;
             } else {
