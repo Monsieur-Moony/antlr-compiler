@@ -416,8 +416,7 @@ grammar A3Code;
 						sb.append(symbolTable.getName(dst));
 						sb.append("[ ");
 						sb.append(symbolTable.getName(src1));
-						sb.append(" ]");
-						sb.append(" = ");
+						sb.append(" ] = ");
 						sb.append(symbolTable.getName(src2));
 						break;
 					case "=[]": // array read
@@ -534,8 +533,8 @@ prog
 {
 	Quad halt = quadTable.add(null, null, null, "");
 	quadTable.backpatchAll(halt.getLabel());
-	System.out.print(symbolTable); // TODO: COMMENT THIS
-	System.out.println("------------------------------------"); // TODO: COMMENT THIS
+	// System.out.print(symbolTable);
+	// System.out.println("------------------------------------");
 	System.out.print(quadTable);
 }
 ;
