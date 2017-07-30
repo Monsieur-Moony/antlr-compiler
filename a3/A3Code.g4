@@ -494,8 +494,8 @@ prog
 : Class Program '{' field_decls method_decls '}'
 {
 	// TODO: UNCOMMENT THIS
-	// Quad halt = quadTable.add(null, null, null, "");
-	// quadTable.backpatchAll(halt.getLabel());
+	Quad halt = quadTable.add(null, null, null, "");
+	quadTable.backpatchAll(halt.getLabel());
 	System.out.print(symbolTable); // TODO: COMMENT THIS
 	System.out.println("------------------------------------"); // TODO: COMMENT THIS
 	System.out.print(quadTable);
@@ -544,23 +544,27 @@ inited_field_decl
 ;
 
 method_decls returns [int id]
-: m=method_decls { createScope(); } method_decl { exitScope(); }
+: m=method_decls method_decl
 |
 ;
 
 method_decl
-: Type Ident
+: method_type Ident
 {
-	DataType type = new DataType(ElemType.valueOf($Type.text.toUpperCase()));
-	Symbol method = symbolTable.addUserVariable($Ident.text, type);
+	Symbol method = symbolTable.addUserVariable($Ident.text, $method_type.type);
 	quadTable.add(method, null, null, "method");
-} '(' params ')' block
-| Void Ident
+} { createScope(); } '(' params ')' block { exitScope(); }
+;
+
+method_type returns [DataType type]
+: Type
 {
-	DataType type = new DataType(ElemType.VOID);
-	Symbol method = symbolTable.addUserVariable($Ident.text, type);
-	quadTable.add(method, null, null, "method");
-} '(' params ')' block
+	$type = new DataType(ElemType.valueOf($Type.text.toUpperCase()));
+}
+| Void
+{
+	$type = new DataType(ElemType.VOID);
+}
 ;
 
 params
