@@ -319,8 +319,14 @@ grammar A3Code;
 				sb.append("L_");
 				sb.append(label);
 				sb.append(": ");
-				if (!op.isEmpty()) {
-					if (op.equals("if") || op.equals("ifFalse")) {
+				switch (op) {
+					case "=":
+						sb.append(symbolTable.getName(dst));
+						sb.append(" = ");
+						sb.append(symbolTable.getName(src1));
+						break;
+					case "if":
+					case "ifFalse":
 						sb.append(op);
 						sb.append(" ");
 						sb.append(symbolTable.getName(src1));
@@ -331,7 +337,8 @@ grammar A3Code;
 						} else {
 							sb.append("__");
 						}
-					} else if (op.equals("goto")) {
+						break;
+					case "goto":
 						sb.append(op);
 						sb.append(" ");
 						if (controlLabel != null) {
@@ -340,7 +347,8 @@ grammar A3Code;
 						} else {
 							sb.append("__");
 						}
-					} else if (op.equals("call")) {
+						break;
+					case "call":
 						if (dst != null) {
 							sb.append(symbolTable.getName(dst));
 							sb.append(" = ");
@@ -350,45 +358,45 @@ grammar A3Code;
 						sb.append(symbolTable.getName(src1));
 						sb.append(" ");
 						sb.append(symbolTable.getName(src2));
-					} else if (op.equals("ret")) {
+						break;
+					case "param": // eg. L_0: <symbol_name> param
+						sb.append(symbolTable.getName(src1));
+						sb.append(" ");
+						sb.append(op);
+						break;
+					case "ret":
 						sb.append(op);
 						if (src1 != null) {
 							sb.append(" ");
 							sb.append(symbolTable.getName(src1));
 						}
-					} else if (op.equals("[]=")) { // array write
+						break;
+					case "[]=": // array write
 						sb.append(symbolTable.getName(dst));
 						sb.append("[ ");
 						sb.append(symbolTable.getName(src1));
 						sb.append(" ]");
 						sb.append(" = ");
 						sb.append(symbolTable.getName(src2));
-					} else if (op.equals("=[]")) { // array read
+						break;
+					case "=[]": // array read
 						sb.append(symbolTable.getName(dst));
 						sb.append(" = ");
 						sb.append(symbolTable.getName(src1));
 						sb.append("[ ");
 						sb.append(symbolTable.getName(src2));
 						sb.append(" ]");
-					} else {
+						break;
+					case "":
+						break;
+					default:
 						sb.append(symbolTable.getName(dst));
-						if (op.equals("param")) { // eg. L_0: <symbol_name> param
-							sb.append(symbolTable.getName(src1));
-							sb.append(" ");
-							sb.append(op);
-						} else {
-							sb.append(" = ");
-							sb.append(symbolTable.getName(src1));
-							// Check to prevent trailing " = " for assignment quads
-							// eg. L_0: <var> = <value>
-							if (!op.equals("=")) {
-								sb.append(" ");
-								sb.append(op);
-								sb.append(" ");
-								sb.append(symbolTable.getName(src2));
-							}
-						}
-					}
+						sb.append(" = ");
+						sb.append(symbolTable.getName(src1));
+						sb.append(" ");
+						sb.append(op);
+						sb.append(" ");
+						sb.append(symbolTable.getName(src2));
 				}
 			}
 			return sb.toString();
