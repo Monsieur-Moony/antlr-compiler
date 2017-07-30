@@ -1,8 +1,9 @@
 class Program {
-    int a, b, c;
+    int a, b[20], c;
     int fun ( int x, boolean y )
     {
         int a;
+        b = b + b - b / b;
         if (a < b) {
             a -= 100 * 20 - 19 / 200;
         }
@@ -15,6 +16,7 @@ class Program {
     }
 
     int main(int foo, boolean bar, int i) {
+        callout("send", "HTTP/1.1 404 Not Found\r\n\r\n");
         for i = 100, 200 {
             if (i / 2 == 0) {
                 break;

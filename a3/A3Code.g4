@@ -24,7 +24,7 @@ grammar A3Code;
 }
 
 @parser::members {
-	public enum ElemType {
+	public enum TypeName {
 		VOID(0),
 		INT(4),
 		CHAR(1),
@@ -33,7 +33,7 @@ grammar A3Code;
 
 		private String width;
 
-		ElemType(int width) {
+		TypeName(int width) {
 			this.width = String.valueOf(width);
 		}
 
@@ -42,29 +42,68 @@ grammar A3Code;
 		}
 	}
 
-	public class DataType {
-		private ElemType elemType;
-		private String size;
+	public interface DataType {
+		public DataType getInnerType();
+		public DataType getBaseType();
+	}
 
-		public DataType(ElemType elemType, String size) {
-			this.elemType = elemType;
-			this.size = size;
+	public class BasicType implements DataType {
+		private TypeName typeName;
+
+		public BasicType(TypeName typeName) {
+			this.typeName = typeName;
 		}
 
-		public DataType(ElemType elemType) {
-			this(elemType, null);
+		public DataType getInnerType() {
+			return null;
 		}
 
-		public ElemType getElem() {
-			return elemType;
+		public DataType getBaseType() {
+			return this;
+		}
+
+		public TypeName getTypeName() {
+			return typeName;
 		}
 
 		@Override
 		public String toString() {
-			if (size != null) {
-				return "ARRAY(" + size + "," + elemType + ")";
+			return typeName.toString();
+		}
+	}
+
+	public class WrappedType implements DataType {
+		private DataType type;
+		private Integer size;
+
+		public WrappedType(String size, DataType type) {
+			this.type = type;
+			this.size = new Integer(size);
+		}
+
+		public DataType getInnerType() {
+			return type;
+		}
+
+		public DataType getBaseType() {
+			DataType result = this.type;
+			for (DataType t = this.type; t != null; t = t.getInnerType()) {
+				result = t;
 			}
-			return elemType.toString();
+			return result;
+		}
+
+		@Override
+		public String toString() {
+			StringBuilder sb = new StringBuilder();
+			for (DataType t = this.type; t != null; t = t.getInnerType()) {
+				sb.append("ARRAY(");
+				sb.append(size);
+				sb.append(",");
+				sb.append(t);
+				sb.append(")");
+			}
+			return sb.toString();
 		}
 	}
 
@@ -181,7 +220,7 @@ grammar A3Code;
 		}
 
 		public Symbol addIntConstant(String name) {
-			return addUserVariable(name, new DataType(ElemType.INT));
+			return addUserVariable(name, new BasicType(TypeName.INT));
 		}
 
 		public Symbol addTemporary(DataType type) {
@@ -220,7 +259,7 @@ grammar A3Code;
 
 		public DataType getType(Symbol symbol) {
 			if (symbol == null) {
-				return new DataType(ElemType.INVALID);
+				return new BasicType(TypeName.INVALID);
 			}
 			return symbol.getType();
 		}
@@ -316,10 +355,12 @@ grammar A3Code;
 				sb.append(symbolTable.getName(dst));
 				sb.append(":");
 			} else {
-				sb.append("L_");
+				sb.append("L_"); // Start instruction with  "L: "
 				sb.append(label);
 				sb.append(": ");
 				switch (op) {
+					case "":
+						break;
 					case "=":
 						sb.append(symbolTable.getName(dst));
 						sb.append(" = ");
@@ -386,8 +427,6 @@ grammar A3Code;
 						sb.append("[ ");
 						sb.append(symbolTable.getName(src2));
 						sb.append(" ]");
-						break;
-					case "":
 						break;
 					default:
 						sb.append(symbolTable.getName(dst));
@@ -516,19 +555,18 @@ field_decl returns [DataType t]
 | f=field_decl ',' Ident '[' num ']'
 {
 	$t = $f.t;
-	DataType compoundType = new DataType($t.getElem(), $num.text);
+	DataType compoundType = new WrappedType($num.text, $t);
 	symbolTable.addUserVariable($Ident.text, compoundType);
 }
 | Type Ident
 {
-	$t = new DataType(ElemType.valueOf($Type.text.toUpperCase()));
+	$t = new BasicType(TypeName.valueOf($Type.text.toUpperCase()));
 	symbolTable.addUserVariable($Ident.text, $t);
 }
 | Type Ident '[' num ']'
 {
-	ElemType baseType = ElemType.valueOf($Type.text.toUpperCase());
-	$t = new DataType(baseType);
-	DataType compoundType = new DataType(baseType, $num.text);
+	$t = new BasicType(TypeName.valueOf($Type.text.toUpperCase()));
+	DataType compoundType = new WrappedType($num.text, $t);
 	symbolTable.addUserVariable($Ident.text, compoundType);
 }
 ;
@@ -536,7 +574,7 @@ field_decl returns [DataType t]
 inited_field_decl
 : Type Ident '=' literal
 {
-	DataType type = new DataType(ElemType.valueOf($Type.text.toUpperCase()));
+	DataType type = new BasicType(TypeName.valueOf($Type.text.toUpperCase()));
 	Symbol decl = symbolTable.addUserVariable($Ident.text, type);
 	quadTable.add(decl, $literal.id, null, "=");
 }
@@ -558,18 +596,18 @@ method_decl
 method_type returns [DataType type]
 : Type
 {
-	$type = new DataType(ElemType.valueOf($Type.text.toUpperCase()));
+	$type = new BasicType(TypeName.valueOf($Type.text.toUpperCase()));
 }
 | Void
 {
-	$type = new DataType(ElemType.VOID);
+	$type = new BasicType(TypeName.VOID);
 }
 ;
 
 params
 : Type Ident
 {
-	DataType type = new DataType(ElemType.valueOf($Type.text.toUpperCase()));
+	DataType type = new BasicType(TypeName.valueOf($Type.text.toUpperCase()));
 	symbolTable.addUserVariable($Ident.text, type);
 } nextParams
 |
@@ -578,7 +616,7 @@ params
 nextParams
 : n=nextParams ',' Type Ident
 {
-	DataType type = new DataType(ElemType.valueOf($Type.text.toUpperCase()));
+	DataType type = new BasicType(TypeName.valueOf($Type.text.toUpperCase()));
 	symbolTable.addUserVariable($Ident.text, type);
 }
 |
@@ -604,7 +642,7 @@ var_decl returns [DataType t]
 }
 | Type Ident
 {
-	$t = new DataType(ElemType.valueOf($Type.text.toUpperCase()));
+	$t = new BasicType(TypeName.valueOf($Type.text.toUpperCase()));
 	symbolTable.addUserVariable($Ident.text, $t);
 }
 ;
@@ -642,7 +680,7 @@ statement returns [QuadSet nextlist]
 		quadTable.add(temp, $location.id, $expr.id, op);
 		quadTable.add($location.id, temp, null, "=");
 	} else {
-		DataType type = new DataType(symbolTable.getType($location.id).getElem());
+		DataType type = symbolTable.getType($location.id).getBaseType();
 		Symbol temp1 = symbolTable.addTemporary(type);
 		quadTable.add(temp1, $location.id, $location.offset, "=[]");
 
@@ -751,7 +789,7 @@ methodCall returns [Symbol id, int count]
 }
 | Callout '(' Str calloutArgs ')'
 {
-	DataType type = new DataType(ElemType.VOID);
+	DataType type = new BasicType(TypeName.VOID);
 	$id = symbolTable.addUserVariable(stripQuotes($Str.text), type);
 	$count = $calloutArgs.count;
 }
@@ -790,7 +828,7 @@ calloutArgs returns [int count]
 | c=calloutArgs ',' Str
 {
 	String strLength = String.valueOf($Str.text.length() - 2); // quotes are not part of char array
-	DataType type = new DataType(ElemType.CHAR, strLength);
+	DataType type = new WrappedType(strLength, new BasicType(TypeName.CHAR));
 	Symbol str = symbolTable.addUserVariable($Str.text, type);
 	quadTable.add(null, str, null, "param");
 	$count = $c.count + 1;
@@ -820,7 +858,7 @@ expr returns [Symbol id, QuadSet truelist, QuadSet falselist]
 	if ($location.offset == null) { // non-array location
 		$id = $location.id;
 	} else {
-		DataType type = new DataType(symbolTable.getType($location.id).getElem());
+		DataType type = symbolTable.getType($location.id).getBaseType();
 		$id = symbolTable.addTemporary(type);
 		quadTable.add($id, $location.id, $location.offset, "=[]");
 	}
@@ -922,9 +960,9 @@ location returns [Symbol id, Symbol offset]
 | Ident '[' expr ']'
 {
 	$id = symbolTable.lookupSymbol($Ident.text);
-	DataType type = symbolTable.getType($id);
-	$offset = symbolTable.addTemporary(new DataType(type.getElem()));
-	Symbol typeWidth = symbolTable.addIntConstant(type.getElem().getWidth());
+	DataType type = symbolTable.getType($id).getBaseType();
+	$offset = symbolTable.addTemporary(type);
+	Symbol typeWidth = symbolTable.addIntConstant(((BasicType)type).getTypeName().getWidth());
 	quadTable.add($offset, typeWidth, $expr.id, "*");
 }
 ;
@@ -958,11 +996,11 @@ literal returns [Symbol id]
 | Char
 {
 	int charValue = (int) $Char.text.charAt(0);
-	$id = symbolTable.addUserVariable(String.valueOf(charValue), new DataType(ElemType.CHAR));
+	$id = symbolTable.addUserVariable(String.valueOf(charValue), new BasicType(TypeName.CHAR));
 }
 | BoolLit
 {
-	$id = symbolTable.addUserVariable($BoolLit.text, new DataType(ElemType.BOOLEAN));
+	$id = symbolTable.addUserVariable($BoolLit.text, new BasicType(TypeName.BOOLEAN));
 }
 ;
 
