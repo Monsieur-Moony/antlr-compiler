@@ -194,8 +194,6 @@ grammar A3Code;
 		private Symbol searchList(String name) {
 			if (name != null) {
 				return nameToSymbolMap.get(name);
-			} else {
-				System.out.println("GIVEN NULL ARG TO SEARCHLIST"); //TODO: REMOVE
 			}
 			return null;
 		}
@@ -421,8 +419,6 @@ grammar A3Code;
 				for (Quad quad : srcQuads) {
 					copyControlLabels(quad, label);
 				}
-			} else {
-				System.out.println("GIVEN NULL ARG TO BACKPATCH"); //TODO: REMOVE
 			}
 		}
 
@@ -461,16 +457,12 @@ grammar A3Code;
 		public void add(Quad newQuad) {
 			if (newQuad != null) {
 				quads.add(newQuad);
-			} else {
-				System.out.println("GIVEN NULL ARG TO ADD"); //TODO: REMOVE
 			}
 		}
 
 		public void merge(QuadSet otherQuads) {
 			if (otherQuads != null) {
 				quads.addAll(otherQuads.toSet());
-			} else {
-				System.out.println("GIVEN NULL ARG TO MERGE"); //TODO: REMOVE
 			}
 		}
 
@@ -493,7 +485,6 @@ grammar A3Code;
 prog
 : Class Program '{' field_decls method_decls '}'
 {
-	// TODO: UNCOMMENT THIS
 	Quad halt = quadTable.add(null, null, null, "");
 	quadTable.backpatchAll(halt.getLabel());
 	System.out.print(symbolTable); // TODO: COMMENT THIS
