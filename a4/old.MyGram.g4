@@ -190,10 +190,12 @@ params returns [int count]
 
 
 block returns [LocList nextlist, LocList brklist, LocList cntlist, LocList retList]
-: '{' var_decls statements '}'
+: '{' 
 {	
 	s.BlockEntry();
-
+}
+var_decls statements '}'
+{
 	$nextlist = $statements.nextlist;
 	$brklist = $statements.brklist;
 	$cntlist = $statements.cntlist;

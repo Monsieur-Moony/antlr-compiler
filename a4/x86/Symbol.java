@@ -120,7 +120,10 @@ package x86;
 		}
 
 		public String AsmPrint () {
-			if (isConst || isGlobal) return ("$" + GetName());
+			if (isConst || isGlobal) {
+				if ((dt == DataType.LABEL) || (isConst) || (arrSize != 0)) return ("$" + GetName());
+				else return (GetName());
+			}
 			else if (dt == DataType.STR) return ("$str" + GetOffset());
 			else if ((dt == DataType.INT) || (dt == DataType.BOOLEAN)) return ("-" + GetOffset() + "(%rbp)");
 			else return GetName();
