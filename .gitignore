@@ -3,5 +3,6 @@
 *.java
 *.class
 *.tokens
+**/.DS_Store
 
 !a4/x86/*.java
