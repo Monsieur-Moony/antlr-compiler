@@ -1,37 +1,24 @@
+/*************************************************
+ * Course: CMPT 379 Compilers - Summer 2017      *
+ * Instructor: ***REMOVED*** ***REMOVED***                        *
+ *                                               *
+ * Author: Karan Sharma                          *
+ * ID: ***REMOVED***                                 *
+ * Email: ***REMOVED***                           *
+ *************************************************/
 grammar MyGram;
 
-
 @header {
-
-import x86.*;
-import java.io.*;
-
+	import x86.*;
+	import java.io.*;
 }
-
-
 
 @parser::members {
-
-
-
-
-
-
-
-	
-
 	SymStack s = new SymStack();
-
 	QuadTab q = new QuadTab(s);
-
-
 }
 
-
-
-
 //---------------------------------------------------------------------------------------------------
-
 
 prog
 : Class Program '{' field_decls
@@ -42,7 +29,7 @@ method_decls '}'
 {
 	s.Print();
 	//print global variables
-	
+
 
 	System.out.println(".globl main");
 	System.out.println(".data");
@@ -56,7 +43,7 @@ method_decls '}'
 field_decls
 : f=field_decls field_decl ';'
 | f=field_decls inited_field_decl ';'
-| 
+|
 ;
 
 
@@ -81,11 +68,10 @@ field_decl returns [DataType t]
 	$t = DataType.valueOf($Type.text.toUpperCase());
 	Symbol sym = s.Add($Ident.text, $t, Integer.parseInt($num.text));
 }
-
 ;
 
-inited_field_decl 
-: Type Ident '=' literal 
+inited_field_decl
+: Type Ident '=' literal
 {
 	DataType t = DataType.valueOf($Type.text.toUpperCase());
 	Symbol src1 = s.insert($literal.text, t, Boolean.TRUE);
@@ -94,13 +80,13 @@ inited_field_decl
 }
 ;
 
-method_decls 
+method_decls
 : m=method_decls method_decl
 |
 ;
 
 method_decl returns [int stackSize, LocList retList]
-: Type Ident 
+: Type Ident
 {
 	DataType t = DataType.valueOf($Type.text.toUpperCase());
 	Symbol sym = s.Add($Ident.text, t);
@@ -117,25 +103,25 @@ method_decl returns [int stackSize, LocList retList]
 }
  block marker
 {
-	
+
 	s.PopSymTab(q);
 
 	$retList.Merge($block.retList);
 	$retList.BackPatch(q, s.insert("" + s.GetOffset(), DataType.INT, Boolean.TRUE));
 }
-| Void Ident 
+| Void Ident
 {
 	DataType t = DataType.VOID;
 	Symbol sym = s.Add($Ident.text, t);
 	s.FunctionEntry();
 	q.Add(sym);
-	int entry = q.Add(null, null, null, "frame");	
+	int entry = q.Add(null, null, null, "frame");
 }
-'(' params ')' 
+'(' params ')'
 {
 
 	$retList = new LocList();
-	$retList.Add(entry);	
+	$retList.Add(entry);
 }
 block marker
 {
@@ -145,7 +131,7 @@ block marker
 	}
 	s.PopSymTab(q);
 
-	$retList.Merge($block.retList);	
+	$retList.Merge($block.retList);
 	$retList.BackPatch(q, s.insert("" + s.GetOffset(), DataType.INT, Boolean.TRUE));
 }
 ;
@@ -170,8 +156,7 @@ params returns [int count]
 				break;
 		case 6: q.Add (null, null, null, "push %r9");
 				break;
-	}	
-
+	}
 }
 | Type Ident
 {
@@ -185,13 +170,11 @@ params returns [int count]
 {
 	$count = 0;
 }
-; 
-
-
+;
 
 block returns [LocList nextlist, LocList brklist, LocList cntlist, LocList retList]
-: '{' 
-{	
+: '{'
+{
 	s.BlockEntry();
 }
 var_decls statements '}'
@@ -205,13 +188,12 @@ var_decls statements '}'
 }
 ;
 
-var_decls 
+var_decls
 : v=var_decls var_decl ';'
 {
 }
-| 
+|
 ;
-
 
 var_decl returns [DataType t]
 : v=var_decl ',' Ident
@@ -234,7 +216,7 @@ statements returns [LocList nextlist, LocList brklist, LocList cntlist, LocList 
 	$brklist = $t.brklist;
 	$brklist.Merge ($statement.brklist);
 	$cntlist = $t.cntlist;
-	$cntlist.Merge ($statement.cntlist);	
+	$cntlist.Merge ($statement.cntlist);
 
 	$retList = $t.retList;
 	$retList.Merge($statement.retList);
@@ -248,7 +230,6 @@ statements returns [LocList nextlist, LocList brklist, LocList cntlist, LocList 
 	$retList = new LocList ();
 }
 ;
-
 
 statement returns [LocList nextlist, LocList brklist, LocList cntlist, LocList retList]
 : location eqOp expr ';'
@@ -274,7 +255,7 @@ statement returns [LocList nextlist, LocList brklist, LocList cntlist, LocList r
 			q.Add($location.base, $location.offset, sym2, "[]=");
 		} else {
 			q.Add($location.base, sym2, null, "=");
-		}	
+		}
 	} else {
 		if ($location.offset != null) {
 			q.Add($location.base, $location.offset, $expr.sym, "[]=");
@@ -289,7 +270,7 @@ statement returns [LocList nextlist, LocList brklist, LocList cntlist, LocList r
 }
 | If '(' expr ')' marker block
 {
-	
+
 	$expr.truelist.BackPatch(q, $marker.label);
 	$nextlist = $expr.falselist;
 	$nextlist.Merge($block.nextlist);
@@ -313,22 +294,22 @@ statement returns [LocList nextlist, LocList brklist, LocList cntlist, LocList r
 	$retList = $b1.retList;
 	$retList.Merge ($b2.retList);
 }
-| For Ident '=' e1=expr ',' 
+| For Ident '=' e1=expr ','
 {
 	q.Add(s.Find($Ident.text), $e1.sym, null, "=");
 
-	$retList = new LocList ();	
+	$retList = new LocList ();
 }
-m1=marker e2=expr 
+m1=marker e2=expr
 {
 	Symbol sym = s.Add(DataType.INT);
 	q.Add(sym, s.Find($Ident.text), $e2.sym, "cmp");
 	$nextlist = new LocList ();
 	$nextlist.Add(q.Add(null, sym, null, "jle"));
 }
-block m2=marker 
+block m2=marker
 {
-	
+
 
 	Symbol one = s.insert("1", DataType.INT);
 	q.Add(s.Find($Ident.text), s.Find($Ident.text), one, "+");
@@ -345,7 +326,7 @@ block m2=marker
 | Brk ';'
 {
 	$nextlist = new LocList ();
-		
+
 	$brklist = new LocList ();
 	$brklist.Add (q.Add (null, null, null, "goto"));
 
@@ -373,25 +354,25 @@ block m2=marker
 | Ret ';'
 {
 	int retins = q.Add (null, null, null, "ret");
-	$nextlist = new LocList ();	
-	$brklist = new LocList ();	
-	$cntlist = new LocList ();	
+	$nextlist = new LocList ();
+	$brklist = new LocList ();
+	$cntlist = new LocList ();
 	$retList = new LocList ();
 	$retList.Add(retins);
 }
 | Ret '(' expr ')' ';'
 {
 	int retins = q.Add (null, $expr.sym, null, "ret");
-	$nextlist = new LocList ();	
-	$brklist = new LocList ();	
+	$nextlist = new LocList ();
+	$brklist = new LocList ();
 	$cntlist = new LocList ();
 	$retList = new LocList ();
 	$retList.Add(retins);
 }
 | methodCall ';'
 {
-	$nextlist = new LocList ();	
-	$brklist = new LocList ();	
+	$nextlist = new LocList ();
+	$brklist = new LocList ();
 	$cntlist = new LocList ();
 	$retList = new LocList ();
 }
@@ -420,7 +401,7 @@ expr returns [Symbol sym, LocList truelist, LocList falselist]
 | AddSub e=expr
 {
 	$sym = s.Add(DataType.INT);
-	q.Add($sym, s.insert("0", DataType.INT), $e.sym, $AddSub.text); 
+	q.Add($sym, s.insert("0", DataType.INT), $e.sym, $AddSub.text);
 }
 | e1=expr MulDiv e2=expr
 {
@@ -495,7 +476,7 @@ expr returns [Symbol sym, LocList truelist, LocList falselist]
 	$falselist = new LocList ();
 	$falselist.Add(q.Add(null, $sym, null, "je"));
 }
-| '!' e=expr 
+| '!' e=expr
 {
 	$truelist = $e.falselist;
 	$falselist = $e.truelist;
@@ -518,20 +499,21 @@ expr returns [Symbol sym, LocList truelist, LocList falselist]
 {
 	$sym = s.Add (s.Find ($Ident.text).GetType());
 	String count = "" + $args.count;
-	q.Add ($sym, s.Find ($Ident.text) , s.insert(count, DataType.INT), "callexp");	
+	q.Add ($sym, s.Find ($Ident.text) , s.insert(count, DataType.INT), "callexp");
 }
 | Callout '(' Str calloutArgs ')'
 {
 	$sym = s.Add (DataType.INT);
 	String count = "" + $calloutArgs.count;
 	q.Add ($sym, s.insert ($Str.text, DataType.STR), s.insert(count, DataType.INT), "callexp");
-};
+}
+;
 
-methodCall 
+methodCall
 : Ident '(' args ')'
 {
 	String count = "" + $args.count;
-	q.Add (null, s.Find ($Ident.text) , s.insert(count, DataType.INT), "call");	
+	q.Add (null, s.Find ($Ident.text) , s.insert(count, DataType.INT), "call");
 }
 | Callout '(' Str calloutArgs ')'
 {
@@ -569,7 +551,7 @@ someArgs returns [int count]
 				break;
 		case 6: q.Add ($expr.sym, null, null, "r9");
 				break;
-	}	
+	}
 
 }
 | expr
@@ -588,16 +570,14 @@ someArgs returns [int count]
 				break;
 		case 6: q.Add ($expr.sym, null, null, "r9");
 				break;
-	}	
-	
+	}
 }
-
 ;
 
 calloutArgs returns [int count]
 : c=calloutArgs ',' expr
 {
-	
+
 	$count = $c.count + 1;
 	switch ($count) {
 		case 1: q.Add ($expr.sym, null, null, "rdi");
@@ -612,7 +592,7 @@ calloutArgs returns [int count]
 				break;
 		case 6: q.Add ($expr.sym, null, null, "r9");
 				break;
-	}	
+	}
 }
 | c=calloutArgs ',' Str
 {
@@ -631,14 +611,13 @@ calloutArgs returns [int count]
 				break;
 		case 6: q.Add (str, null, null, "r9");
 				break;
-	}	
+	}
 }
 |
 {
 	$count = 0;
 }
 ;
-
 
 marker returns [Symbol label]
 :
@@ -655,7 +634,6 @@ next returns [LocList nextlist]
 	$nextlist.Add(q.Add(null, null, null, "goto"));
 }
 ;
-
 
 location returns [Symbol base, Symbol offset]
 :Ident
@@ -702,11 +680,6 @@ eqOp
 | AssignOp
 ;
 
-
-
-
-
-
 //-----------------------------------------------------------------------------------------------------------
 fragment Delim
 : ' '
@@ -738,23 +711,18 @@ fragment AlphaNum
 | Digit
 ;
 
-
 WhiteSpace
 : Delim+ -> skip
 ;
 
-
-
 Char
 : '\'' ~('\\') '\''
-| '\'\\' . '\'' 
+| '\'\\' . '\''
 ;
 
 Str
 :'"' ((~('\\' | '"')) | ('\\'.))* '"'
-; 
-
-
+;
 
 Class
 : 'class'
@@ -800,13 +768,9 @@ DecNum
 : Digit+
 ;
 
-
 HexNum
 : '0x'HexDigit+
 ;
-
-
-
 
 BoolLit
 : 'true'
@@ -819,10 +783,8 @@ Type
 ;
 
 Ident
-: Alpha AlphaNum* 
+: Alpha AlphaNum*
 ;
-
-
 
 AssignOp
 : '+='
@@ -838,16 +800,3 @@ AddSub
 : '+'
 | '-'
 ;
-
-
-
-
-
-
-
-
-
-
-
-
-

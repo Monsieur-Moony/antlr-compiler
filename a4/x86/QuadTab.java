@@ -1,7 +1,14 @@
+/*************************************************
+ * Course: CMPT 379 Compilers - Summer 2017      *
+ * Instructor: ***REMOVED*** ***REMOVED***                        *
+ *                                               *
+ * Author: Karan Sharma                          *
+ * ID: ***REMOVED***                                 *
+ * Email: ***REMOVED***                           *
+ *************************************************/
 package x86;
 
 public class QuadTab {
-
 	Quad qt[];
 	int size;
 	SymStack s;
@@ -12,15 +19,13 @@ public class QuadTab {
 		s = stk;
 	}
 
-
-
 	public int Add(Symbol dst, Symbol src1, Symbol src2, String op) {
-		
+
 		qt[size] = new Quad(s, size, dst, src1, src2, op);
 		return (size ++);
 	}
 
-	public int Add(Symbol label) { 
+	public int Add(Symbol label) {
 		qt[size] = new Quad (label);
 		return (size ++);
 	}
