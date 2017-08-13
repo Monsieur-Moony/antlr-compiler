@@ -53,48 +53,78 @@ public class Quad {
 
 		switch (op) {
 			case "":
+				System.out.println("push %rbp");
+				System.out.println("mov %rsp, %rbp");
 				break;
 			case "frame":
+				System.out.println("sub " + dst.AsmPrint() + ", %rsp");
 				break;
 			case "ret":
+				if (src1 != null) System.out.println("mov -" + src1.GetOffset() + "(%rbp), %rax");
+				System.out.println("add $" + dst.GetName() + ", %rsp");
+				System.out.println("pop %rbp");
+				System.out.println("ret");
 				break;
 			case "=":
+				ReadSrc1(src1);
+				WriteDst(dst);
 				break;
 			case "+":
+				ReadSrc1(src1);
+				ReadSrc2(src2);
+				Compute("add");
+				WriteDst(dst);
 				break;
 			case "-":
+				ReadSrc1(src1);
+				ReadSrc2(src2);
+				Compute("sub");
+				WriteDst(dst);
 				break;
 			case "*":
+				ReadSrc1(src1);
+				ReadSrc2(src2);
+				System.out.println("mulq %rbx");
+				WriteDst(dst);
 				break;
 			case "/":
+				ReadSrc1(src1);
+				ReadSrc2(src2);
+				Compute("idiv");
+				WriteDst(dst);
 				break;
-			case "+=":
+			case "%":
+				ReadSrc1(src1);
+				ReadSrc2(src2);
+				Compute("idiv");
+				WriteDst(dst);
 				break;
-			case "-=":
-				break;
+			// case "+=":
+			// 	break;
+			// case "-=":
+			// 	break;
 			default:
 		}
 
-
-		if (op.equals("")) { //label
-			System.out.println("push %rbp");
-			System.out.println("mov %rsp, %rbp");
-		} else if (op.equals("frame")) {
-			System.out.println("sub " + dst.AsmPrint() + ", %rsp");
-		} else if (op.equals("ret")) { //return
-			if (src1 != null) System.out.println("mov -" + src1.GetOffset() + "(%rbp), %rax");
-			System.out.println("add $" + dst.GetName() + ", %rsp");
-			System.out.println("pop %rbp");
-			System.out.println("ret");
-		} else if (op.equals("=")) { //assignment
-			ReadSrc1(src1);
-			WriteDst(dst);
-		} else if (op.equals("+")) { //addition
-			ReadSrc1(src1);
-			ReadSrc2(src2);
-			Compute("add");
-			WriteDst(dst);
-		}
+		// if (op.equals("")) { //label
+		// 	System.out.println("push %rbp");
+		// 	System.out.println("mov %rsp, %rbp");
+		// } else if (op.equals("frame")) {
+		// 	System.out.println("sub " + dst.AsmPrint() + ", %rsp");
+		// } else if (op.equals("ret")) { //return
+		// 	if (src1 != null) System.out.println("mov -" + src1.GetOffset() + "(%rbp), %rax");
+		// 	System.out.println("add $" + dst.GetName() + ", %rsp");
+		// 	System.out.println("pop %rbp");
+		// 	System.out.println("ret");
+		// } else if (op.equals("=")) { //assignment
+		// 	ReadSrc1(src1);
+		// 	WriteDst(dst);
+		// } else if (op.equals("+")) { //addition
+		// 	ReadSrc1(src1);
+		// 	ReadSrc2(src2);
+		// 	Compute("add");
+		// 	WriteDst(dst);
+		// }
 	}
 
 	void Compute (String opcode) {

@@ -1,0 +1,13 @@
+class Program {
+	int a, b, c;
+	int foo() {
+        a = b;
+        return (a+b-c);
+	}
+    void bar() {
+        a = 3 + 5 * 7 / 11 - 4 % 13;
+    }
+    boolean abc() {
+        return false;
+    }
+}

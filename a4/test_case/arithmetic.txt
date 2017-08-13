@@ -1,0 +1,11 @@
+class Program {
+	int a, b, c;
+	int foo() {
+        b = (11 / 3) % 7;
+        c = 5 * 7 - 17;
+		a = b + c;
+
+        a += 1;
+        c -= 3;
+	}
+}

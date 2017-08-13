@@ -1,0 +1,6 @@
+class Program {
+	int x[100], z;
+	int main() {
+		z = x[1];
+	}
+}

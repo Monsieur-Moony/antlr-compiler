@@ -97,13 +97,11 @@ method_decl returns [int stackSize, LocList retList]
 }
 '(' params ')'
 {
-
 	$retList = new LocList();
 	$retList.Add(entry);
 }
  block marker
 {
-
 	s.PopSymTab(q);
 
 	$retList.Merge($block.retList);
@@ -119,7 +117,6 @@ method_decl returns [int stackSize, LocList retList]
 }
 '(' params ')'
 {
-
 	$retList = new LocList();
 	$retList.Add(entry);
 }
@@ -270,7 +267,6 @@ statement returns [LocList nextlist, LocList brklist, LocList cntlist, LocList r
 }
 | If '(' expr ')' marker block
 {
-
 	$expr.truelist.BackPatch(q, $marker.label);
 	$nextlist = $expr.falselist;
 	$nextlist.Merge($block.nextlist);
@@ -309,8 +305,6 @@ m1=marker e2=expr
 }
 block m2=marker
 {
-
-
 	Symbol one = s.insert("1", DataType.INT);
 	q.Add(s.Find($Ident.text), s.Find($Ident.text), one, "+");
 	q.Add($m1.label, null, null, "goto");
@@ -685,6 +679,7 @@ fragment Delim
 : ' '
 | '\t'
 | '\n'
+| '\r'
 ;
 
 fragment Letter
