@@ -100,6 +100,11 @@ public class Quad {
 			case "[]":
 				break;
 			case "[]=":
+				System.out.println("mov " + dst.AsmPrint() + ", %rax");
+				ReadSrc2(src1);
+				Compute("add");
+				ReadSrc2(src2);
+				System.out.println("mov %rbx, (%rax)");
 				break;
 			case "goto":
 				break;
@@ -117,7 +122,7 @@ public class Quad {
 					System.out.println(op); // e.g. push %rdx
 				} else {
 					if (dst.isConstant()) {
-						System.out.println("add $" + dst.GetName() + ", %" + op);
+						System.out.println("add " + dst.AsmPrint() + ", %" + op);
 					} else {
 						System.out.println("mov -" + dst.GetOffset() + "(%rbp), " + op);
 					}
