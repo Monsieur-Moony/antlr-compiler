@@ -59,6 +59,10 @@ public class Quad {
 			case "frame":
 				System.out.println("sub " + dst.AsmPrint() + ", %rsp");
 				break;
+			case "call":
+				break;
+			case "callexp":
+				break;
 			case "ret":
 				if (src1 != null) System.out.println("mov -" + src1.GetOffset() + "(%rbp), %rax");
 				System.out.println("add $" + dst.GetName() + ", %rsp");
@@ -93,17 +97,31 @@ public class Quad {
 				Compute("idiv");
 				WriteDst(dst);
 				break;
-			case "%":
-				ReadSrc1(src1);
-				ReadSrc2(src2);
-				Compute("idiv");
-				WriteDst(dst);
+			case "[]":
 				break;
-			// case "+=":
-			// 	break;
-			// case "-=":
-			// 	break;
+			case "[]=":
+				break;
+			case "goto":
+				break;
+			case "je":
+			case "jg":
+			case "jge":
+			case "jl":
+			case "jle":
+			case "jne":
+				break;
+			case "cmp":
+				break;
 			default:
+				if (dst == null) {
+					System.out.println(op); // e.g. push %rdx
+				} else {
+					if (dst.isConstant()) {
+						System.out.println("add $" + dst.GetName() + ", %" + op);
+					} else {
+						System.out.println("mov -" + dst.GetOffset() + "(%rbp), " + op);
+					}
+				}
 		}
 
 		// if (op.equals("")) { //label
