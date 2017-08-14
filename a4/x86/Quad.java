@@ -60,8 +60,11 @@ public class Quad {
 				System.out.println("sub " + dst.AsmPrint() + ", %rsp");
 				break;
 			case "call":
+				System.out.println("call " + src1.GetName());
 				break;
 			case "callexp":
+				System.out.println("call " + src1.GetName());
+				StoreSrc1(dst);
 				break;
 			case "ret":
 				if (src1 != null) System.out.println("mov -" + src1.GetOffset() + "(%rbp), %rax");
@@ -98,15 +101,21 @@ public class Quad {
 				WriteDst(dst);
 				break;
 			case "[]":
+				ReadSrc1(src1);
+				ReadSrc2(src2);
+				Compute("add");
+				System.out.println("mov (%rax), %rbx");
+				StoreSrc2(dst);
 				break;
 			case "[]=":
-				System.out.println("mov " + dst.AsmPrint() + ", %rax");
+				ReadSrc1(dst);
 				ReadSrc2(src1);
 				Compute("add");
 				ReadSrc2(src2);
 				System.out.println("mov %rbx, (%rax)");
 				break;
 			case "goto":
+				System.out.println("jmp " + dst.GetName());
 				break;
 			case "je":
 			case "jg":
@@ -114,18 +123,19 @@ public class Quad {
 			case "jl":
 			case "jle":
 			case "jne":
+				System.out.println(op + " " + dst.GetName());
 				break;
 			case "cmp":
+				ReadSrc1(src1);
+				ReadSrc2(src2);
+				System.out.println("cmp %rax, %rbx");
+				StoreSrc1(dst);
 				break;
 			default:
 				if (dst == null) {
 					System.out.println(op); // e.g. push %rdx
 				} else {
-					if (dst.isConstant()) {
-						System.out.println("add " + dst.AsmPrint() + ", %" + op);
-					} else {
-						System.out.println("mov -" + dst.GetOffset() + "(%rbp), " + op);
-					}
+					System.out.println("mov " + dst.AsmPrint() + ", %" + op);
 				}
 		}
 
@@ -158,8 +168,16 @@ public class Quad {
 		System.out.println("mov " + src.AsmPrint() + ", %rax");
 	}
 
+	void StoreSrc1 (Symbol dst) {
+		System.out.println("mov %rax, " + dst.AsmPrint());
+	}
+
 	void ReadSrc2 (Symbol src) {
 		System.out.println("mov " + src.AsmPrint() + ", %rbx");
+	}
+
+	void StoreSrc2 (Symbol dst) {
+		System.out.println("mov %rbx, " + dst.AsmPrint());
 	}
 
 	void WriteDst (Symbol dst) {
