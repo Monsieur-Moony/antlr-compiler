@@ -130,7 +130,6 @@ public class Quad {
 				ReadSrc1(src1);
 				ReadSrc2(src2);
 				System.out.println("cmp %rax, %rbx");
-				StoreSrc1(dst);
 				break;
 			default:
 				if (op.startsWith("push")) { // e.g. when op is "push %rdi"
