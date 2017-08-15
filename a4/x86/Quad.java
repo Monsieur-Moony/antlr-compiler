@@ -135,33 +135,13 @@ public class Quad {
 			default:
 				if (op.startsWith("push")) { // e.g. when op is "push %rdi"
 					String sourceReg = op.substring(op.lastIndexOf(" ") + 1);
-					System.out.println("mov " + sourceReg + ", "); //TODO: FIX THIS
+					System.out.println("mov " + sourceReg + ", " + src2.AsmPrint());
 				} else {
 					if (dst != null) { // e.g. when op is "rsi", "rdi" etc
 						System.out.println("mov " + dst.AsmPrint() + ", %" + op);
 					}
 				}
 		}
-
-		// if (op.equals("")) { //label
-		// 	System.out.println("push %rbp");
-		// 	System.out.println("mov %rsp, %rbp");
-		// } else if (op.equals("frame")) {
-		// 	System.out.println("sub " + dst.AsmPrint() + ", %rsp");
-		// } else if (op.equals("ret")) { //return
-		// 	if (src1 != null) System.out.println("mov -" + src1.GetOffset() + "(%rbp), %rax");
-		// 	System.out.println("add $" + dst.GetName() + ", %rsp");
-		// 	System.out.println("pop %rbp");
-		// 	System.out.println("ret");
-		// } else if (op.equals("=")) { //assignment
-		// 	ReadSrc1(src1);
-		// 	WriteDst(dst);
-		// } else if (op.equals("+")) { //addition
-		// 	ReadSrc1(src1);
-		// 	ReadSrc2(src2);
-		// 	Compute("add");
-		// 	WriteDst(dst);
-		// }
 	}
 
 	void Compute (String opcode) {

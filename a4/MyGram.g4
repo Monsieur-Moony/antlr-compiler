@@ -141,17 +141,17 @@ params returns [int count]
 
 	$count = $p.count + 1;
 	switch ($count) {
-		case 1: q.Add (null, null, null, "push %rdi");
+		case 1: q.Add (null, null, sym, "push %rdi");
 				break;
-		case 2: q.Add (null, null, null, "push %rsi");
+		case 2: q.Add (null, null, sym, "push %rsi");
 				break;
-		case 3: q.Add (null, null, null, "push %rdx");
+		case 3: q.Add (null, null, sym, "push %rdx");
 				break;
-		case 4: q.Add (null, null, null, "push %rcx");
+		case 4: q.Add (null, null, sym, "push %rcx");
 				break;
-		case 5: q.Add (null, null, null, "push %r8");
+		case 5: q.Add (null, null, sym, "push %r8");
 				break;
-		case 6: q.Add (null, null, null, "push %r9");
+		case 6: q.Add (null, null, sym, "push %r9");
 				break;
 	}
 }
@@ -161,7 +161,7 @@ params returns [int count]
 	Symbol sym = s.Add($Ident.text, t);
 
 	$count = 1;
-	q.Add (null, null, null, "push %rdi");
+	q.Add (null, null, sym, "push %rdi");
 }
 |
 {
