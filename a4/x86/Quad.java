@@ -95,9 +95,10 @@ public class Quad {
 				WriteDst(dst);
 				break;
 			case "/":
+				System.out.println("mov $0, %rdx");
 				ReadSrc1(src1);
 				ReadSrc2(src2);
-				Compute("idiv");
+				System.out.println("idiv %rbx");
 				WriteDst(dst);
 				break;
 			case "[]":
@@ -132,10 +133,13 @@ public class Quad {
 				StoreSrc1(dst);
 				break;
 			default:
-				if (dst == null) {
-					System.out.println(op); // e.g. push %rdx
+				if (op.startsWith("push")) { // e.g. when op is "push %rdi"
+					String sourceReg = op.substring(op.lastIndexOf(" ") + 1);
+					System.out.println("mov " + sourceReg + ", "); //TODO: FIX THIS
 				} else {
-					System.out.println("mov " + dst.AsmPrint() + ", %" + op);
+					if (dst != null) { // e.g. when op is "rsi", "rdi" etc
+						System.out.println("mov " + dst.AsmPrint() + ", %" + op);
+					}
 				}
 		}
 
