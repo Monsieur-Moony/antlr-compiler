@@ -39,7 +39,6 @@ public class Symbol {
 		isGlobal = Boolean.FALSE;
 	}
 
-
 	public Symbol (String n, DataType d, int arrSz, int o) {
 		name = n;
 		dt = d;
@@ -71,7 +70,6 @@ public class Symbol {
 		isGlobal = Boolean.FALSE;
 	}
 
-
 	public Symbol (int id, DataType d, Boolean isConstant, int o) {
 		if (d == DataType.LABEL) name = "L_" + id;
 		else name = "t_" + id;
@@ -82,8 +80,6 @@ public class Symbol {
 		offset = o;
 		isGlobal = Boolean.FALSE;
 	}
-
-
 
 	public boolean Equal (String n) {
 		return (name.equals(n));
@@ -131,5 +127,4 @@ public class Symbol {
 		else if ((dt == DataType.INT) || (dt == DataType.BOOLEAN)) return ("-" + GetOffset() + "(%rbp)");
 		else return GetName();
 	}
-
 }

@@ -50,8 +50,6 @@ public class SymStack {
 		PushSymTab();
 	}
 
-
-
 	void PushSymTab () {
 
 		ss[size] = new SymTab (offset);
@@ -162,7 +160,6 @@ public class SymStack {
 	public void PrintGlobals() {
 		ss[0].PrintGlobals();
 	}
-
 
 	public int GetOffset() {
 		return offset;

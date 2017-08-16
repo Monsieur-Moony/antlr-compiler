@@ -43,8 +43,6 @@ public class SymTab {
 
 	}
 
-
-
 	public Symbol Add (String n, DataType d, int offset) {
 		st[size] = new Symbol(n, d, offset);
 		size ++;
@@ -58,7 +56,6 @@ public class SymTab {
 		//IncOffset();
 		return (st[size - 1]);
 	}
-
 
 	public Symbol Add (String n, DataType d, Boolean isConstant, int offset) {
 		st[size] = new Symbol(n, d, isConstant, offset);
@@ -106,7 +103,6 @@ public class SymTab {
 
 	public void PrintGlobals() {
 		for (int i = 0; i < size; i++) {
-
 			if (!((st[i].GetType() == DataType.INT) || (st[i].GetType() == DataType.BOOLEAN) || (st[i].GetType() == DataType.STR))) continue;
 			if (st[i].isConstant() == Boolean.TRUE) continue;
 
