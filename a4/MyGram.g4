@@ -493,13 +493,13 @@ expr returns [Symbol sym, LocList truelist, LocList falselist]
 {
 	$sym = s.Add (s.Find ($Ident.text).GetType());
 	String count = "" + $args.count;
-	q.Add ($sym, s.Find ($Ident.text) , s.insert(count, DataType.INT), "callexp");
+	q.Add ($sym, s.Find ($Ident.text) , s.insert(count, DataType.INT, Boolean.TRUE), "callexp");
 }
 | Callout '(' Str calloutArgs ')'
 {
 	$sym = s.Add (DataType.INT);
 	String count = "" + $calloutArgs.count;
-	q.Add ($sym, s.insert ($Str.text, DataType.STR), s.insert(count, DataType.INT), "callexp");
+	q.Add ($sym, s.insert ($Str.text, DataType.STR), s.insert(count, DataType.INT, Boolean.TRUE), "callexp");
 }
 ;
 
@@ -507,12 +507,12 @@ methodCall
 : Ident '(' args ')'
 {
 	String count = "" + $args.count;
-	q.Add (null, s.Find ($Ident.text) , s.insert(count, DataType.INT), "call");
+	q.Add (null, s.Find ($Ident.text) , s.insert(count, DataType.INT, Boolean.TRUE), "call");
 }
 | Callout '(' Str calloutArgs ')'
 {
 	String count = "" + $calloutArgs.count;
-	q.Add (null, s.insert ($Str.text.replace("\"", ""), DataType.STR), s.insert(count, DataType.INT), "call");
+	q.Add (null, s.insert ($Str.text.replace("\"", ""), DataType.STR), s.insert(count, DataType.INT, Boolean.TRUE), "call");
 }
 ;
 
