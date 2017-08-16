@@ -305,7 +305,7 @@ m1=marker e2=expr
 }
 block m2=marker
 {
-	Symbol one = s.insert("1", DataType.INT);
+	Symbol one = s.insert("1", DataType.INT, Boolean.TRUE);
 	q.Add(s.Find($Ident.text), s.Find($Ident.text), one, "+");
 	q.Add($m1.label, null, null, "goto");
 
@@ -395,17 +395,12 @@ expr returns [Symbol sym, LocList truelist, LocList falselist]
 | AddSub e=expr
 {
 	$sym = s.Add(DataType.INT);
-	q.Add($sym, s.insert("0", DataType.INT), $e.sym, $AddSub.text);
+	q.Add($sym, s.insert("0", DataType.INT, Boolean.TRUE), $e.sym, $AddSub.text);
 }
 | e1=expr MulDiv e2=expr
 {
 	$sym = s.Add(DataType.INT);
 	q.Add($sym, $e1.sym, $e2.sym, $MulDiv.text);
-}
-| e1=expr AddSub e2=expr
-{
-	$sym = s.Add(DataType.INT);
-	q.Add($sym, $e1.sym, $e2.sym, $AddSub.text);
 }
 | e1=expr '%' e2=expr
 {
@@ -415,6 +410,11 @@ expr returns [Symbol sym, LocList truelist, LocList falselist]
 	q.Add(sym2, sym1, $e2.sym, "*");
 	$sym = s.Add(DataType.INT);
 	q.Add($sym, $e1.sym, sym2, "-");
+}
+| e1=expr AddSub e2=expr
+{
+	$sym = s.Add(DataType.INT);
+	q.Add($sym, $e1.sym, $e2.sym, $AddSub.text);
 }
 | e1=expr '<' e2=expr
 {
