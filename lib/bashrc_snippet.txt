@@ -1,3 +1,7 @@
+# Bash snippet to quickly test the parser or code generation
+# Assumes that function will be called in the folder containing
+# the relevant Python script
+
 antlr_jar_path='e:\git\compilers\lib\antlr-4.5.3-complete.jar'
 export CLASSPATH=".;$antlr_jar_path"
 alias antlr4='java -Xmx500M org.antlr.v4.Tool'

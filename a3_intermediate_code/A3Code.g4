@@ -1,13 +1,3 @@
-/*************************************************
- * Course: CMPT 379 Compilers - Summer 2017      *
- * Instructor: ***REMOVED*** ***REMOVED***                        *
- *                                               *
- * Author: Karan Sharma                          *
- * ID: ***REMOVED***                                 *
- * Email: ***REMOVED***                           *
- *************************************************/
-// NOTE: Changes to Sessions 1 and 3 were made with the instructor's permission
-
 grammar A3Code;
 
 //---------------------------------------------------------------------------------------------------
